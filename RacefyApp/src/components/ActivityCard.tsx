@@ -7,6 +7,7 @@ import { Avatar } from './Avatar';
 import { InteractionButton } from './InteractionButton';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
+import { VisibilityBadge } from './VisibilityBadge';
 import { useUnits } from '../hooks/useUnits';
 import { useSportTypes } from '../hooks/useSportTypes';
 import { fixStorageUrl } from '../config/api';
@@ -147,23 +148,10 @@ function ActivityCardBase({
               <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
                 {activity.title}
               </Text>
-              {/* Privacy Indicator */}
-              <View
-                style={[
-                  styles.privacyBadge,
-                  {
-                    backgroundColor: activity.is_private
-                      ? colors.textMuted + '15'
-                      : colors.primary + '15',
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={activity.is_private ? 'lock-closed' : 'globe-outline'}
-                  size={12}
-                  color={activity.is_private ? colors.textMuted : colors.primary}
-                />
-              </View>
+              {/* Who can see it — author only. The old two-state icon showed a globe for followers-only. */}
+              {activity.is_owner && (
+                <VisibilityBadge visibility={activity.visibility} variant="icon" />
+              )}
             </View>
             <View style={styles.metaRow}>
               <Text style={[styles.sportName, { color: colors.textSecondary }]}>
@@ -418,13 +406,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     flex: 1,
-  },
-  privacyBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: borderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   sportName: {
     fontSize: fontSize.sm,

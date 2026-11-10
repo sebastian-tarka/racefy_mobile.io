@@ -4044,5 +4044,10 @@
       "loadMore": "Pokaż więcej",
       "reactions": "{{likes}} polubień · {{comments}} komentarzy",
       "openActivity": "Otwórz aktywność"
-    }
+    },
+  "visibility": {
+    "public": "Wszyscy",
+    "followers": "Obserwujący",
+    "private": "Tylko ja"
+  }
 }

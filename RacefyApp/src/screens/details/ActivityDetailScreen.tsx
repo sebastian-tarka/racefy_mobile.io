@@ -57,6 +57,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
 import { getErrorMessage, isApiError } from '../../utils/errors';
 import { formatDate, formatIntlDate } from '../../utils/dateFormat';
+import { VisibilityBadge } from '../../components/VisibilityBadge';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -446,6 +447,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                     <Text style={[styles.sportType, { color: colors.textSecondary }]}>
                       {activity.sport_type?.name || t('activityDetail.activity')}
                     </Text>
+                    {isOwner && <VisibilityBadge visibility={activity.visibility} />}
                     {activity.training_week_id && (
                       <View
                         style={[
