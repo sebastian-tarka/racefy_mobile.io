@@ -8,8 +8,7 @@ import { logger } from '../services/logger';
 import { InteractionButton } from './InteractionButton';
 import type { CommentaryType, EventCommentary } from '../types/api';
 import { formatTimeAgo } from '../utils/dateFormat';
-import { useNavigation } from '@react-navigation/native';
-import { splitCommentaryMentions } from '../utils/mentions';
+import { CommentaryMentionText } from './CommentaryMentionText';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
@@ -26,24 +25,6 @@ export function CommentaryItem({
 }: CommentaryItemProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const navigation = useNavigation<any>();
-
-  // "@handle" of a participant (API `mentions`) opens their profile; the rest is plain text.
-  const renderWithMentions = (text: string | null) =>
-    splitCommentaryMentions(text, commentary.mentions).map((segment, i) =>
-      segment.username ? (
-        <Text
-          key={i}
-          style={{ color: colors.primary, fontWeight: '600' }}
-          onPress={() => navigation.navigate('UserProfile', { username: segment.username })}
-          accessibilityRole="link"
-        >
-          {segment.text}
-        </Text>
-      ) : (
-        segment.text
-      ),
-    );
 
   const handleShare = useCallback(async () => {
     try {
@@ -134,13 +115,13 @@ export function CommentaryItem({
       {/* Title (if present) */}
       {commentary.title && (
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {renderWithMentions(commentary.title)}
+          <CommentaryMentionText text={commentary.title} mentions={commentary.mentions} />
         </Text>
       )}
 
       {/* Content */}
       <Text style={[styles.content, { color: colors.textSecondary }]}>
-        {renderWithMentions(commentary.content)}
+        <CommentaryMentionText text={commentary.content} mentions={commentary.mentions} />
       </Text>
 
       {/* Status indicator for pending/processing/failed */}
