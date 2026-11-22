@@ -28,6 +28,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ExerciseForm'>;
 /** Create / edit a library exercise. Global rows are read-only here. */
 export function ExerciseFormScreen({ navigation, route }: Props) {
   const exerciseId = route.params?.exerciseId;
+  const addToSessionId = route.params?.addToSessionId;
   const isEdit = exerciseId != null;
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -35,7 +36,7 @@ export function ExerciseFormScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(route.params?.name ?? '');
   const [group, setGroup] = useState<MuscleGroup>('other');
   const [equipment, setEquipment] = useState('');
   const [video, setVideo] = useState('');
@@ -81,8 +82,21 @@ export function ExerciseFormScreen({ navigation, route }: Props) {
     };
     setSubmitting(true);
     try {
-      if (isEdit) await api.updateExercise(exerciseId, payload);
-      else await api.createExercise(payload);
+      if (isEdit) {
+        await api.updateExercise(exerciseId, payload);
+      } else {
+        const created = await api.createExercise(payload);
+        if (addToSessionId != null) {
+          // Back to the session, which adds the exercise as its next group.
+          emitRefresh('workouts');
+          navigation.popTo(
+            'WorkoutSession',
+            { sessionId: addToSessionId, addExerciseId: created.id },
+            { merge: true },
+          );
+          return;
+        }
+      }
       emitRefresh('workouts');
       navigation.goBack();
     } catch (error) {

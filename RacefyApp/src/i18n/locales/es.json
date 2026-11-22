@@ -3576,6 +3576,9 @@
       "title": "Elegir ejercicio",
       "search": "Buscar ejercicios…",
       "createNew": "Añadir «{{name}}» como ejercicio nuevo",
+      "newWithForm": "Nuevo ejercicio",
+      "newWithFormNamed": "Nuevo ejercicio «{{name}}»",
+      "newWithFormHint": "Con grupo muscular, material y vídeo",
       "noResults": "No hay resultados: escribe un nombre para crearlo",
       "global": "Global",
       "mine": "Míos"

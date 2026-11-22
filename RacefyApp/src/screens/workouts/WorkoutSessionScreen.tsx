@@ -200,6 +200,16 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
     }
   };
 
+  // Back from ExerciseForm with a freshly created exercise: add it, once.
+  const addExerciseId = route.params.addExerciseId;
+  useEffect(() => {
+    if (addExerciseId == null || !session) return;
+    navigation.setParams({ addExerciseId: undefined });
+    void addExercise({ id: addExerciseId });
+    // addExercise is recreated every render; the param is what triggers this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addExerciseId, session != null]);
+
   /** Nothing logged in a free-form session: the API will not complete it — throw it away. */
   const discardSession = () =>
     Alert.alert('', t('strengthPlans.session.freeform.confirmDiscard'), [
@@ -712,6 +722,13 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(ref, exercise) => void addExercise(ref, exercise)}
+        onCreateWithForm={(name) => {
+          setPickerOpen(false);
+          navigation.navigate('ExerciseForm', {
+            name: name || undefined,
+            addToSessionId: sessionId,
+          });
+        }}
       />
     </ScreenContainer>
   );

@@ -3514,6 +3514,9 @@
       "title": "Choose exercise",
       "search": "Search exercises…",
       "createNew": "Add “{{name}}” as a new exercise",
+      "newWithForm": "New exercise",
+      "newWithFormNamed": "New exercise “{{name}}”",
+      "newWithFormHint": "With muscle group, equipment and video",
       "noResults": "Nothing found — type a name to create it",
       "global": "Global",
       "mine": "Mine"

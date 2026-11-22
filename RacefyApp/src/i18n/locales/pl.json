@@ -3571,6 +3571,9 @@
       "title": "Wybierz ćwiczenie",
       "search": "Szukaj ćwiczeń…",
       "createNew": "Dodaj „{{name}}” jako nowe ćwiczenie",
+      "newWithForm": "Nowe ćwiczenie",
+      "newWithFormNamed": "Nowe ćwiczenie „{{name}}”",
+      "newWithFormHint": "Z partią mięśni, sprzętem i filmem",
       "noResults": "Nic nie znaleziono — wpisz nazwę, aby utworzyć",
       "global": "Globalne",
       "mine": "Moje"
