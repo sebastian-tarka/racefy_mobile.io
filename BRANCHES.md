@@ -34,6 +34,21 @@ i18n pl/en/es. `tsc`, eslint, jest (942) zielone.
 - [ ] Offline w trakcie: odhaczanie serii kolejkuje się, dodanie ćwiczenia pokazuje komunikat o sieci
 - [ ] Telefon fizyczny / iOS
 
+Dodatkowo na tej samej gałęzi (2026-11-22):
+- **Arkusz „Zakończ trening”** — podsumowanie (serie, objętość, czas), RPE w dwóch rzędach po 5 z opisem poziomu
+  („7 · Ciężko”), widoczność jako trzy kafle z ikonami, przycisk zapisu przypięty na dole.
+- **Podsumowanie po treningu** — mozaika serii, objętość, postęp i ćwiczenia z `strength_session`
+  (te same komponenty co feed); podtytuł = tytuł aktywności (nazwa treningu dowolnego z API).
+- **Okno „Nieopublikowane aktywności”** (Home) — karuzela, jedna wersja robocza na stronę: mapa trasy, sport, data,
+  dystans / czas / tempo, wybór widoczności (domyślnie bardziej restrykcyjna z posta i aktywności; publikacja ustawia
+  ją na aktywności i poście), „Opublikuj wszystkie” z potwierdzeniem. `/posts/drafts` nie zwraca trasy ani sportu —
+  apka dociąga `GET /activities/{id}` dla oglądanej i następnej strony (do poprawy w API: eager load w `drafts()`).
+- [x] Arkusz zakończenia: układ, wybór RPE z opisem, widoczność (emulator)
+- [x] Podsumowanie: mozaika, objętość, postęp, ćwiczenia, nazwa „Strength training · Back” (emulator)
+- [x] Okno wersji roboczych: mapa, statystyki, przewijanie „2 z 5”, zmiana widoczności (emulator)
+- [ ] Wersje robocze: publikacja pojedyncza i „Opublikuj wszystkie” — post i aktywność dostają wybraną widoczność
+- [ ] Wersje robocze bez GPS (trening siłowy, ręczna aktywność) — karta bez mapy wygląda dobrze
+
 ## Na `main`, ale niezweryfikowane runtime
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
