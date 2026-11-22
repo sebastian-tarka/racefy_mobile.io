@@ -9,13 +9,30 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-10**
+Stan na: **2026-11-22**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Pusto (2026-11-10: `feat/visibility-badge` zmergowane — niżej)._
+### `feat/strength-free-session` — trening siłowy dowolny, bez planu (od 2026-11-22)
+
+Start treningu siłowego bez planu: pusta sesja, ćwiczenia dodawane w trakcie, nazwa nadawana przez API przy
+zakończeniu z dwóch najczęściej trenowanych partii („Trening siłowy · Klatka, Ramiona”). Start z arkusza Start
+(Home + przytrzymanie FAB) i z listy planów („Trening dowolny”). Ekran sesji: pusty stan, „Dodaj ćwiczenie”
+(biblioteka, szybka nowa nazwa albo pełny formularz z partią mięśni → powrót do sesji), „+ seria” także dla
+ćwiczeń ad hoc, „Odrzuć trening” (DELETE) zamiast „Pomiń”, „Zakończ” bez zaliczonej serii proponuje odrzucenie.
+i18n pl/en/es. `tsc`, eslint, jest (942) zielone.
+**Wymaga API z `feature/strength-free-session` (racefy_api.io: `POST /workout-sessions` bez `workout_id`,
+`is_freeform`, sport `strength-training` aktywny) — na produkcji jeszcze nie ma, merge dopiero po wdrożeniu API.**
+- [x] Arkusz Start → „Trening siłowy” otwiera pustą sesję (emulator Android, lokalne API)
+- [x] Ćwiczenie z biblioteki: seria z ostatnim ciężarem i przerwą 90 s; „+ seria” dla ćwiczenia ad hoc (emulator)
+- [x] „Nowe ćwiczenie” → formularz z nazwą z wyszukiwarki → zapis wraca do sesji i dodaje ćwiczenie (emulator)
+- [x] Zakończenie → aktywność; „Odrzuć trening” usuwa sesję; drugi start przy otwartej sesji → „Wznowić?” (emulator)
+- [ ] Nazwa po zakończeniu z partii mięśni („Trening siłowy · Plecy”) widoczna w podsumowaniu i w feedzie
+- [ ] Lista planów: „Trening dowolny” w menu „+” i w pustym stanie
+- [ ] Offline w trakcie: odhaczanie serii kolejkuje się, dodanie ćwiczenia pokazuje komunikat o sieci
+- [ ] Telefon fizyczny / iOS
 
 ## Na `main`, ale niezweryfikowane runtime
 
