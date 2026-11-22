@@ -425,6 +425,21 @@
     "reminderSubtitle": "Revisa y publica tus borradores",
     "viewAll": "Ver todos los borradores",
     "dismissReminder": "Más tarde",
+    "reminderCount_one": "Tienes {{count}} actividad sin publicar",
+    "reminderCount_many": "Tienes {{count}} actividades sin publicar",
+    "reminderCount_other": "Tienes {{count}} actividades sin publicar",
+    "reminderHint": "Publícalas para que tus amigos las vean. Las estadísticas y los puntos ya cuentan.",
+    "publishAll": "Publicar todas ({{count}})",
+    "confirmPublishAll": "¿Publicar {{count}} borradores? Serán visibles según su configuración de visibilidad.",
+    "pageOf": "{{index}} de {{total}}",
+    "visibilityLabel": "Quién lo verá",
+    "viewAllShort": "Todos los borradores",
+    "aiShort": "IA",
+    "untitled": "Actividad sin título",
+    "stat": {
+      "distance": "distancia",
+      "time": "tiempo"
+    },
     "unpublishedNote_one": "{{count}} actividad grabada sin publicar. Al publicarla conservas tus estadísticas y puntos.",
     "unpublishedNote_other": "{{count}} actividades grabadas sin publicar. Al publicarlas conservas tus estadísticas y puntos."
   },

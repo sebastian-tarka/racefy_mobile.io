@@ -421,6 +421,20 @@
     "reminderSubtitle": "Review and publish your drafts",
     "viewAll": "View all drafts",
     "dismissReminder": "Later",
+    "reminderCount_one": "You have {{count}} unpublished activity",
+    "reminderCount_other": "You have {{count}} unpublished activities",
+    "reminderHint": "Publish so your friends can see them. Stats and points already count.",
+    "publishAll": "Publish all ({{count}})",
+    "confirmPublishAll": "Publish {{count}} drafts? They will be visible according to their visibility settings.",
+    "pageOf": "{{index}} of {{total}}",
+    "visibilityLabel": "Who can see it",
+    "viewAllShort": "All drafts",
+    "aiShort": "AI",
+    "untitled": "Untitled activity",
+    "stat": {
+      "distance": "distance",
+      "time": "time"
+    },
     "unpublishedNote_one": "{{count}} recorded activity is unpublished. Publishing keeps your stats and points.",
     "unpublishedNote_other": "{{count}} recorded activities are unpublished. Publishing keeps your stats and points."
   },
