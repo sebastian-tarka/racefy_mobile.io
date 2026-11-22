@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, OptionSelector, ScreenContainer } from '../../../components';
+import { Button, Input, ScreenContainer } from '../../../components';
 import { useTheme } from '../../../hooks/useTheme';
 import type { ActivityVisibility, WorkoutSessionCompleteInput } from '../../../types/workouts';
-import { borderRadius, fontSize, spacing } from '../../../theme';
+import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
+import { formatTime } from '../../../utils/formatters';
 import { MAX_SESSION_DURATION_SECONDS } from '../../../utils/sessionDuration';
 
 interface Props {
@@ -17,18 +27,47 @@ interface Props {
    * duration, prefilled with `suggested` (read once, when the sheet opens).
    */
   durationPrompt?: { suggested: number | null } | null;
+  /** What is about to be saved — shown on top so the athlete sees it before confirming. */
+  summary?: { setsCompleted: number; setsTotal: number; volumeKg: number; seconds: number };
 }
 
-const RPE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const VISIBILITIES: ActivityVisibility[] = ['public', 'followers', 'private'];
+const RPE_ROWS = [
+  [1, 2, 3, 4, 5],
+  [6, 7, 8, 9, 10],
+];
+const VISIBILITIES: { value: ActivityVisibility; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'public', icon: 'globe-outline' },
+  { value: 'followers', icon: 'people-outline' },
+  { value: 'private', icon: 'lock-closed-outline' },
+];
+
+/** Borg CR10 bands, so the number the athlete picks reads as words too. */
+function rpeLevel(n: number): 'easy' | 'moderate' | 'hard' | 'veryHard' | 'max' {
+  if (n <= 3) return 'easy';
+  if (n <= 6) return 'moderate';
+  if (n <= 8) return 'hard';
+  if (n === 9) return 'veryHard';
+  return 'max';
+}
 
 const toInt = (value: string) => {
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
-/** RPE 1–10, notes, visibility (+ duration after an overrun) → the session becomes an activity. */
-export function CompleteSessionSheet({ visible, onClose, onSubmit, durationPrompt }: Props) {
+/**
+ * Summary, RPE 1–10, notes, visibility (+ duration after an overrun) → the
+ * session becomes an activity. The controls span the full width and the save
+ * button sits pinned at the bottom, within thumb reach, instead of floating
+ * under the form with half the screen left empty.
+ */
+export function CompleteSessionSheet({
+  visible,
+  onClose,
+  onSubmit,
+  durationPrompt,
+  summary,
+}: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [rpe, setRpe] = useState<number | null>(null);
@@ -68,6 +107,23 @@ export function CompleteSessionSheet({ visible, onClose, onSubmit, durationPromp
     }
   };
 
+  const stats = summary
+    ? [
+        {
+          label: t('strengthPlans.complete.sets'),
+          value: `${summary.setsCompleted}/${summary.setsTotal}`,
+        },
+        {
+          label: t('strengthPlans.complete.volume'),
+          value: `${Math.round(summary.volumeKg)} kg`,
+        },
+        {
+          label: t('strengthPlans.complete.time'),
+          value: formatTime(asksDuration ? durationSeconds : summary.seconds),
+        },
+      ]
+    : [];
+
   return (
     <Modal
       visible={visible}
@@ -80,103 +136,183 @@ export function CompleteSessionSheet({ visible, onClose, onSubmit, durationPromp
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('strengthPlans.complete.title')}
           </Text>
-          <TouchableOpacity onPress={onClose} hitSlop={10}>
+          <TouchableOpacity onPress={onClose} hitSlop={10} accessibilityLabel={t('common.close')}>
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {asksDuration && (
-            <>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>
-                {t('strengthPlans.complete.duration')}
-              </Text>
-              <Text style={[styles.hint, { color: colors.warning }]}>
-                {t('strengthPlans.complete.durationOverrun')}
-              </Text>
-              <View style={styles.durationRow}>
-                <View style={styles.durationField}>
-                  <Input
-                    label={t('strengthPlans.complete.hours')}
-                    value={hours}
-                    onChangeText={setHours}
-                    keyboardType="number-pad"
-                    maxLength={2}
-                  />
-                </View>
-                <View style={styles.durationField}>
-                  <Input
-                    label={t('strengthPlans.complete.minutes')}
-                    value={minutes}
-                    onChangeText={setMinutes}
-                    keyboardType="number-pad"
-                    maxLength={3}
-                    error={tooLong ? t('strengthPlans.complete.durationMax') : null}
-                  />
+
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {stats.length > 0 && (
+              <View style={styles.statsRow}>
+                {stats.map((s) => (
+                  <View
+                    key={s.label}
+                    style={[
+                      styles.statTile,
+                      { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{s.value}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                      {s.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {asksDuration && (
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>
+                  {t('strengthPlans.complete.duration')}
+                </Text>
+                <Text style={[styles.hint, { color: colors.warning }]}>
+                  {t('strengthPlans.complete.durationOverrun')}
+                </Text>
+                <View style={styles.durationRow}>
+                  <View style={styles.flex}>
+                    <Input
+                      label={t('strengthPlans.complete.hours')}
+                      value={hours}
+                      onChangeText={setHours}
+                      keyboardType="number-pad"
+                      maxLength={2}
+                    />
+                  </View>
+                  <View style={styles.flex}>
+                    <Input
+                      label={t('strengthPlans.complete.minutes')}
+                      value={minutes}
+                      onChangeText={setMinutes}
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      error={tooLong ? t('strengthPlans.complete.durationMax') : null}
+                    />
+                  </View>
                 </View>
               </View>
-            </>
-          )}
+            )}
 
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            {t('strengthPlans.complete.rpe')}
-          </Text>
-          <View style={styles.rpeRow}>
-            {RPE.map((n) => {
-              const active = rpe === n;
-              return (
-                <TouchableOpacity
-                  key={n}
-                  style={[
-                    styles.rpeChip,
-                    {
-                      backgroundColor: active ? colors.primary : colors.cardBackground,
-                      borderColor: active ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => setRpe(active ? null : n)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Text
-                    style={[styles.rpeText, { color: active ? '#ffffff' : colors.textPrimary }]}
-                  >
-                    {n}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            <View style={styles.section}>
+              <View style={styles.labelRow}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>
+                  {t('strengthPlans.complete.rpe')}
+                </Text>
+                <Text style={[styles.rpeValue, { color: colors.primary }]}>
+                  {rpe != null
+                    ? `${rpe} · ${t(`strengthPlans.complete.rpeLevels.${rpeLevel(rpe)}`)}`
+                    : ''}
+                </Text>
+              </View>
+              {RPE_ROWS.map((row) => (
+                <View key={row[0]} style={styles.rpeRow}>
+                  {row.map((n) => {
+                    const active = rpe === n;
+                    return (
+                      <TouchableOpacity
+                        key={n}
+                        style={[
+                          styles.rpeTile,
+                          {
+                            backgroundColor: active ? colors.primary : colors.cardBackground,
+                            borderColor: active ? colors.primary : colors.border,
+                          },
+                        ]}
+                        onPress={() => setRpe(active ? null : n)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={`${n}, ${t(`strengthPlans.complete.rpeLevels.${rpeLevel(n)}`)}`}
+                      >
+                        <Text
+                          style={[
+                            styles.rpeText,
+                            { color: active ? colors.onPrimary : colors.textPrimary },
+                          ]}
+                        >
+                          {n}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))}
+              <View style={styles.rpeScale}>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                  {t('strengthPlans.complete.rpeLevels.easy')}
+                </Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                  {t('strengthPlans.complete.rpeLevels.max')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {t('strengthPlans.complete.visibility')}
+              </Text>
+              <View style={styles.visibilityRow} accessibilityRole="radiogroup">
+                {VISIBILITIES.map(({ value, icon }) => {
+                  const active = visibility === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      style={[
+                        styles.visibilityTile,
+                        {
+                          backgroundColor: active ? colors.primary + '1f' : colors.cardBackground,
+                          borderColor: active ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setVisibility(value)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Ionicons
+                        name={icon}
+                        size={20}
+                        color={active ? colors.primary : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.visibilityText,
+                          { color: active ? colors.primary : colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {t(`strengthPlans.complete.visibilityOptions.${value}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <Input
+              label={t('strengthPlans.complete.notes')}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder={t('strengthPlans.complete.notesPlaceholder')}
+              multiline
+              numberOfLines={4}
+              style={styles.notes}
+            />
+          </ScrollView>
+
+          {/* Pinned: the one action of this sheet stays in thumb reach. */}
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
+            <Button
+              title={t('strengthPlans.complete.submit')}
+              onPress={submit}
+              loading={submitting}
+              disabled={durationInvalid}
+              fullWidth
+            />
           </View>
-          <Text style={[styles.hint, { color: colors.textMuted }]}>
-            {t('strengthPlans.complete.rpeHint')}
-          </Text>
-
-          <Input
-            label={t('strengthPlans.complete.notes')}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-          />
-
-          <OptionSelector<ActivityVisibility>
-            label={t('strengthPlans.complete.visibility')}
-            value={visibility}
-            onChange={setVisibility}
-            options={VISIBILITIES.map((v) => ({
-              value: v,
-              label: t(`strengthPlans.complete.visibilityOptions.${v}`),
-            }))}
-          />
-
-          <Button
-            title={t('strengthPlans.complete.submit')}
-            onPress={submit}
-            loading={submitting}
-            disabled={durationInvalid}
-            fullWidth
-            style={{ marginTop: spacing.md }}
-          />
-        </ScrollView>
+        </KeyboardAvoidingView>
       </ScreenContainer>
     </Modal>
   );
@@ -196,38 +332,101 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.lg,
     paddingBottom: spacing.xl,
   },
+  flex: {
+    flex: 1,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  statTile: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    gap: 2,
+  },
+  statValue: {
+    fontSize: msFont(22),
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: {
+    fontSize: fontSize.xs,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   label: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  rpeValue: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   rpeRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.sm,
   },
-  rpeChip: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
+  rpeTile: {
+    flex: 1,
+    height: 56,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rpeText: {
-    fontSize: fontSize.md,
+    fontSize: msFont(20),
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  rpeScale: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   hint: {
     fontSize: fontSize.xs,
+  },
+  visibilityRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  visibilityTile: {
+    flex: 1,
+    height: 64,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  visibilityText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  notes: {
+    minHeight: 96,
+    textAlignVertical: 'top',
   },
   durationRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  durationField: {
-    flex: 1,
+  footer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    borderTopWidth: 1,
   },
 });

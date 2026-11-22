@@ -3724,6 +3724,14 @@
       "title": "Zakończ trening",
       "rpe": "Wysiłek (RPE)",
       "rpeHint": "1 = bardzo lekko · 10 = maksymalnie",
+      "rpeLevels": {
+        "easy": "Lekko",
+        "moderate": "Umiarkowanie",
+        "hard": "Ciężko",
+        "veryHard": "Bardzo ciężko",
+        "max": "Maksimum"
+      },
+      "notesPlaceholder": "Jak poszło? Co zmienić następnym razem?",
       "duration": "Czas treningu",
       "durationOverrun": "Licznik chodził dalej, bo sesja nie została zakończona. Sprawdź, ile trening trwał naprawdę.",
       "hours": "Godziny",

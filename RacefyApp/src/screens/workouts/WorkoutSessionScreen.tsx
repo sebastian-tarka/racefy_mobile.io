@@ -712,6 +712,12 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         onClose={() => setCompleteOpen(false)}
         onSubmit={finish}
         durationPrompt={durationPrompt}
+        summary={{
+          setsCompleted: stats?.sets_completed ?? 0,
+          setsTotal: stats?.sets_total ?? 0,
+          volumeKg: stats?.volume_kg ?? 0,
+          seconds: s.elapsedSeconds,
+        }}
       />
       <ExerciseHistoryModal
         exerciseId={history?.id ?? null}

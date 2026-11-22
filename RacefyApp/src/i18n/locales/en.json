@@ -3665,6 +3665,14 @@
       "title": "Finish workout",
       "rpe": "Effort (RPE)",
       "rpeHint": "1 = very easy · 10 = all out",
+      "rpeLevels": {
+        "easy": "Easy",
+        "moderate": "Moderate",
+        "hard": "Hard",
+        "veryHard": "Very hard",
+        "max": "All out"
+      },
+      "notesPlaceholder": "How did it go? Anything to change next time?",
       "duration": "Workout duration",
       "durationOverrun": "The timer kept running because the session wasn't finished. Check how long the workout really took.",
       "hours": "Hours",
