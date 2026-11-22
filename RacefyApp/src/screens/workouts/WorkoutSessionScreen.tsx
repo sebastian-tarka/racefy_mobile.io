@@ -25,7 +25,7 @@ import {
 } from '../../services/strength/restTimerNotification';
 import { borderRadius, fontSize, heroColors, msFont, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import type { WorkoutSessionExercise } from '../../types/workouts';
+import type { Exercise, ExerciseReference, WorkoutSessionExercise } from '../../types/workouts';
 import { formatTime } from '../../utils/formatters';
 import { formatTarget } from '../../utils/workoutPlanFormat';
 import { api } from '../../services/api';
@@ -35,6 +35,7 @@ import { SessionSetRow, type Draft } from './components/SessionSetRow';
 import { WorkoutSessionSummary } from './components/WorkoutSessionSummary';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
+import { ExercisePickerModal } from './components/ExercisePickerModal';
 import { getErrorMessage } from '../../utils/errors';
 import { LONG_SESSION_SECONDS, MAX_SESSION_DURATION_SECONDS } from '../../utils/sessionDuration';
 
@@ -68,6 +69,8 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   const [result, setResult] = useState<{ activityId: number | null } | null>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [isAddingExercise, setIsAddingExercise] = useState(false);
 
   const formatDay = useCallback(
     (iso: string) =>
@@ -172,6 +175,63 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
     } catch (error) {
       Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
+  };
+
+  /**
+   * An exercise picked mid-session goes in as an ad-hoc group at the end. The
+   * picker can hand back a brand-new name — that one is created in the
+   * library first, since a set needs an exercise id.
+   */
+  const addExercise = async (ref: ExerciseReference, exercise?: Exercise) => {
+    setPickerOpen(false);
+    setIsAddingExercise(true);
+    try {
+      let exerciseId = ref.id ?? exercise?.id ?? null;
+      if (exerciseId == null && ref.name) {
+        exerciseId = (await api.createExercise({ name: ref.name })).id;
+      }
+      if (exerciseId == null) return;
+      const created = await s.addSet({ exercise_id: exerciseId });
+      if (created) setCurrentOrder(created.exercise_order);
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
+    } finally {
+      setIsAddingExercise(false);
+    }
+  };
+
+  /** Nothing logged in a free-form session: the API will not complete it — throw it away. */
+  const discardSession = () =>
+    Alert.alert('', t('strengthPlans.session.freeform.confirmDiscard'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('strengthPlans.session.freeform.discard'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await s.discard();
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert('', getErrorMessage(error) || t('common.error'));
+          }
+        },
+      },
+    ]);
+
+  /** Finishing a free-form session with no completed set would be refused — say why first. */
+  const openFinish = () => {
+    if (session?.is_freeform && (session.stats?.sets_completed ?? 0) === 0) {
+      Alert.alert('', t('strengthPlans.session.freeform.nothingLogged'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('strengthPlans.session.freeform.discard'),
+          style: 'destructive',
+          onPress: discardSession,
+        },
+      ]);
+      return;
+    }
+    setCompleteOpen(true);
   };
 
   const skipSession = () =>
@@ -337,15 +397,15 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
               {session.workout_name}
             </Text>
             <Text style={styles.sessionMeta} numberOfLines={1}>
-              {t('strengthPlans.session.exerciseOf', {
-                index: index + 1,
-                total: exercises.length,
-              })}{' '}
-              ·{' '}
-              {t('strengthPlans.session.progress', {
-                done: stats?.sets_completed ?? 0,
-                total: stats?.sets_total ?? 0,
-              })}
+              {exercises.length > 0
+                ? `${t('strengthPlans.session.exerciseOf', {
+                    index: index + 1,
+                    total: exercises.length,
+                  })} · ${t('strengthPlans.session.progress', {
+                    done: stats?.sets_completed ?? 0,
+                    total: stats?.sets_total ?? 0,
+                  })}`
+                : t('strengthPlans.session.freeform.subtitle')}
             </Text>
             {s.pendingCount > 0 && (
               <View style={styles.offlineChip}>
@@ -444,6 +504,19 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         )}
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Free-form session, nothing added yet: the screen's only job is the first exercise. */}
+          {!current && (
+            <View style={styles.empty}>
+              <Ionicons name="barbell-outline" size={48} color={colors.textMuted} />
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                {t('strengthPlans.session.freeform.emptyTitle')}
+              </Text>
+              <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
+                {t('strengthPlans.session.freeform.emptyHint')}
+              </Text>
+            </View>
+          )}
+
           {current && renderExerciseHead(current)}
 
           {/* Column headers make the two number fields unambiguous. */}
@@ -481,11 +554,17 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             />
           ))}
 
-          {inProgress && current?.workout_exercise_id != null && (
+          {/* A prescribed exercise adds a set from its plan row; one added
+              mid-session (ad hoc) has no plan row, so it goes by exercise id. */}
+          {inProgress && current && (current.workout_exercise_id != null || current.exercise) && (
             <TouchableOpacity
               style={[styles.addSet, { borderColor: colors.border }]}
               onPress={() =>
-                void s.addSet({ workout_exercise_id: current.workout_exercise_id as number })
+                void s.addSet(
+                  current.workout_exercise_id != null
+                    ? { workout_exercise_id: current.workout_exercise_id }
+                    : { exercise_id: current.exercise!.id },
+                )
               }
             >
               <Ionicons name="add" size={16} color={colors.textSecondary} />
@@ -495,78 +574,127 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity onPress={skipSession} style={styles.skipSession}>
+          {inProgress && (
+            <TouchableOpacity
+              style={[
+                styles.addExercise,
+                current
+                  ? { borderColor: colors.border }
+                  : { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setPickerOpen(true)}
+              disabled={isAddingExercise}
+            >
+              {isAddingExercise ? (
+                <ActivityIndicator color={current ? colors.primary : colors.onPrimary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={18}
+                    color={current ? colors.primary : colors.onPrimary}
+                  />
+                  <Text
+                    style={[
+                      styles.addExerciseText,
+                      { color: current ? colors.primary : colors.onPrimary },
+                    ]}
+                  >
+                    {t(
+                      current
+                        ? 'strengthPlans.session.freeform.addExercise'
+                        : 'strengthPlans.session.freeform.addFirstExercise',
+                    )}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* Skipping a free-form session would only leave an empty "skipped"
+              row behind — there is no planned day to account for. */}
+          <TouchableOpacity
+            onPress={session.is_freeform ? discardSession : skipSession}
+            style={styles.skipSession}
+          >
             <Text style={[styles.skipSessionText, { color: colors.textMuted }]}>
-              {t('strengthPlans.session.skipSession')}
+              {t(
+                session.is_freeform
+                  ? 'strengthPlans.session.freeform.discard'
+                  : 'strengthPlans.session.skipSession',
+              )}
             </Text>
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Footer: moving on and finishing never scroll out of reach. */}
-        <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <TouchableOpacity
-            style={[
-              styles.footerBack,
-              { borderColor: colors.border, opacity: index === 0 ? 0.5 : 1 },
-            ]}
-            onPress={() => setCurrentOrder(exercises[index - 1]?.exercise_order ?? null)}
-            disabled={index === 0}
-            accessibilityLabel={t('strengthPlans.session.prevExercise')}
-          >
-            <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
-          </TouchableOpacity>
-
-          {next ? (
+        {/* Footer: moving on and finishing never scroll out of reach. An empty
+            free-form session has nothing to move between or finish yet. */}
+        {current && (
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <TouchableOpacity
               style={[
-                styles.footerPrimary,
-                { backgroundColor: currentDone ? colors.primary : colors.textPrimary },
+                styles.footerBack,
+                { borderColor: colors.border, opacity: index === 0 ? 0.5 : 1 },
               ]}
-              onPress={() => setCurrentOrder(next.exercise_order)}
-              activeOpacity={0.85}
+              onPress={() => setCurrentOrder(exercises[index - 1]?.exercise_order ?? null)}
+              disabled={index === 0}
+              accessibilityLabel={t('strengthPlans.session.prevExercise')}
             >
-              <Text
-                style={[styles.footerPrimaryText, { color: colors.cardBackground }]}
-                numberOfLines={1}
+              <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
+            </TouchableOpacity>
+
+            {next ? (
+              <TouchableOpacity
+                style={[
+                  styles.footerPrimary,
+                  { backgroundColor: currentDone ? colors.primary : colors.textPrimary },
+                ]}
+                onPress={() => setCurrentOrder(next.exercise_order)}
+                activeOpacity={0.85}
               >
-                {t(
-                  currentUntouched
-                    ? 'strengthPlans.session.skipExercise'
-                    : 'strengthPlans.session.next',
-                  { name: next.exercise?.name ?? '' },
-                )}
-              </Text>
-              <Ionicons name="chevron-forward" size={17} color={colors.cardBackground} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.footerPrimary,
-                { backgroundColor: colors.primary, shadowColor: colors.primary },
-              ]}
-              onPress={() => setCompleteOpen(true)}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.footerPrimaryText, { color: colors.onPrimary }]}>
-                {t('strengthPlans.session.finish')}
-              </Text>
-            </TouchableOpacity>
-          )}
+                <Text
+                  style={[styles.footerPrimaryText, { color: colors.cardBackground }]}
+                  numberOfLines={1}
+                >
+                  {t(
+                    currentUntouched
+                      ? 'strengthPlans.session.skipExercise'
+                      : 'strengthPlans.session.next',
+                    { name: next.exercise?.name ?? '' },
+                  )}
+                </Text>
+                <Ionicons name="chevron-forward" size={17} color={colors.cardBackground} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.footerPrimary,
+                  { backgroundColor: colors.primary, shadowColor: colors.primary },
+                ]}
+                onPress={openFinish}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.footerPrimaryText, { color: colors.onPrimary }]}>
+                  {t('strengthPlans.session.finish')}
+                </Text>
+              </TouchableOpacity>
+            )}
 
-          {/* Finishing was only reachable from the last exercise: until then the
+            {/* Finishing was only reachable from the last exercise: until then the
               primary button said "Next", and the only way out was "Skip
               session", which saves nothing. Half a workout is still a workout,
               so ending it early has to keep it. */}
-          {next && (
-            <TouchableOpacity
-              style={[styles.footerFinish, { borderColor: colors.border }]}
-              onPress={() => setCompleteOpen(true)}
-              accessibilityLabel={t('strengthPlans.session.finish')}
-            >
-              <Ionicons name="flag" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
+            {next && (
+              <TouchableOpacity
+                style={[styles.footerFinish, { borderColor: colors.border }]}
+                onPress={openFinish}
+                accessibilityLabel={t('strengthPlans.session.finish')}
+              >
+                <Ionicons name="flag" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       <CompleteSessionSheet
@@ -579,6 +707,11 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         exerciseId={history?.id ?? null}
         exerciseName={history?.name ?? ''}
         onClose={() => setHistory(null)}
+      />
+      <ExercisePickerModal
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(ref, exercise) => void addExercise(ref, exercise)}
       />
     </ScreenContainer>
   );
@@ -831,5 +964,36 @@ const styles = StyleSheet.create({
   addSetText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
+  },
+  addExercise: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs + 2,
+    height: 48,
+    marginTop: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  addExerciseText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  empty: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  emptyTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptyHint: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });

@@ -280,6 +280,19 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       return response.data;
     }
 
+    /**
+     * Start a free-form session: no plan, no sets, named "Strength training"
+     * until it is completed. Exercises come in through addWorkoutSessionSet
+     * `{ exercise_id }`. Only `in_progress_exists` can collide (409).
+     */
+    async startFreeWorkoutSession(): Promise<WorkoutSession> {
+      const response = await this.request<Types.ApiResponse<WorkoutSession>>('/workout-sessions', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      return response.data;
+    }
+
     /** Log a planned workout as skipped without starting it. */
     async skipPlannedWorkout(
       workoutId: number,

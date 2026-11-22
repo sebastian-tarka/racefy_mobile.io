@@ -185,6 +185,8 @@
       "title": "Start an activity",
       "start": "Record new activity",
       "startDesc": "Track with GPS in real time",
+      "strength": "Strength training",
+      "strengthDesc": "No plan, add exercises as you go",
       "trainings": "Show trainings",
       "trainingsDesc": "Browse your training plan",
       "import": "Import from GPX",
@@ -3366,6 +3368,8 @@
     "emptyHint": "Build a plan from scratch or import a spreadsheet.",
     "newPlan": "New plan",
     "importXlsx": "Import spreadsheet",
+    "quickWorkout": "Free workout",
+    "quickWorkoutDesc": "No plan, add exercises as you go",
     "library": "Exercise library",
     "status": {
       "draft": "Draft",
@@ -3603,6 +3607,16 @@
       "backToPlanned": "Back to planned"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Free workout",
+        "emptyTitle": "Add your first exercise",
+        "emptyHint": "Add exercises as you train. We name the workout when you finish, after the muscle groups you trained.",
+        "addFirstExercise": "Add first exercise",
+        "addExercise": "Add exercise",
+        "discard": "Discard workout",
+        "confirmDiscard": "Discard this workout? Nothing will be saved.",
+        "nothingLogged": "No set is completed yet, so there is nothing to save. Complete a set or discard the workout."
+      },
       "progress": "{{done}}/{{total}} sets",
       "volume": "{{kg}} kg",
       "setNo": "Set {{n}}",
@@ -3667,6 +3681,7 @@
       "volume": "Volume",
       "openActivity": "Open activity",
       "backToPlan": "Back to plan",
+      "close": "Done",
       "skippedTitle": "Session skipped"
     },
     "history": {

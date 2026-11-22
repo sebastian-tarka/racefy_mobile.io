@@ -311,6 +311,12 @@ export interface WorkoutSession {
   day_label: string | null;
   workout_plan_id: number | null;
   workout_id: number | null;
+  /**
+   * Started without a plan: empty at first, exercises added while training,
+   * named after the muscle groups trained when it is completed. A planned
+   * session whose plan was deleted also has no plan ids, so test this flag.
+   */
+  is_freeform: boolean;
   activity_id: number | null;
   started_at: string | null;
   completed_at: string | null;

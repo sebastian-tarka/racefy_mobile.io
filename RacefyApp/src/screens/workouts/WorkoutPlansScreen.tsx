@@ -16,6 +16,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BottomSheet, Button, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
+import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -38,6 +39,9 @@ export function WorkoutPlansScreen({ navigation }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addSheet, setAddSheet] = useState(false);
+  const { startFree, isStartingFree } = useStartWorkoutSession((sessionId) =>
+    navigation.navigate('WorkoutSession', { sessionId }),
+  );
   const [planSheet, setPlanSheet] = useState<WorkoutPlan | null>(null);
 
   const fetchPlans = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -92,6 +96,13 @@ export function WorkoutPlansScreen({ navigation }: Props) {
     ]);
 
   const addOptions: BottomSheetOption[] = [
+    {
+      id: 'free',
+      icon: 'barbell-outline',
+      title: t('strengthPlans.quickWorkout'),
+      description: t('strengthPlans.quickWorkoutDesc'),
+      onPress: () => void startFree(),
+    },
     {
       id: 'new',
       icon: 'add-circle-outline',
@@ -278,6 +289,12 @@ export function WorkoutPlansScreen({ navigation }: Props) {
                   title={t('strengthPlans.importXlsx')}
                   variant="outline"
                   onPress={() => navigation.navigate('WorkoutPlanImport')}
+                />
+                <Button
+                  title={t('strengthPlans.quickWorkout')}
+                  variant="outline"
+                  loading={isStartingFree}
+                  onPress={() => void startFree()}
                 />
               </View>
             </View>

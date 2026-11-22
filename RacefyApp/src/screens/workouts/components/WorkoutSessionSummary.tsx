@@ -115,7 +115,11 @@ export function WorkoutSessionSummary({
           />
         )}
         <Button
-          title={t('strengthPlans.complete.backToPlan')}
+          title={t(
+            session.is_freeform
+              ? 'strengthPlans.complete.close'
+              : 'strengthPlans.complete.backToPlan',
+          )}
           variant="outline"
           onPress={onBack}
           fullWidth

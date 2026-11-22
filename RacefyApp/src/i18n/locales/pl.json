@@ -185,6 +185,8 @@
       "title": "Rozpocznij aktywność",
       "start": "Nagraj nową aktywność",
       "startDesc": "Śledź GPS w czasie rzeczywistym",
+      "strength": "Trening siłowy",
+      "strengthDesc": "Bez planu, ćwiczenia dodajesz w trakcie",
       "trainings": "Pokaż treningi",
       "trainingsDesc": "Przeglądaj swój plan treningowy",
       "import": "Importuj z pliku GPX",
@@ -3423,6 +3425,8 @@
     "emptyHint": "Ułóż plan od zera albo zaimportuj arkusz.",
     "newPlan": "Nowy plan",
     "importXlsx": "Importuj arkusz",
+    "quickWorkout": "Trening dowolny",
+    "quickWorkoutDesc": "Bez planu, ćwiczenia dodajesz w trakcie",
     "library": "Biblioteka ćwiczeń",
     "status": {
       "draft": "Szkic",
@@ -3660,6 +3664,16 @@
       "backToPlanned": "Przywróć do zaplanowanych"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Trening dowolny",
+        "emptyTitle": "Dodaj pierwsze ćwiczenie",
+        "emptyHint": "Ćwiczenia dodajesz w trakcie treningu. Nazwę nadamy po zakończeniu, na podstawie trenowanych partii.",
+        "addFirstExercise": "Dodaj pierwsze ćwiczenie",
+        "addExercise": "Dodaj ćwiczenie",
+        "discard": "Odrzuć trening",
+        "confirmDiscard": "Odrzucić ten trening? Nic nie zostanie zapisane.",
+        "nothingLogged": "Nie ma jeszcze żadnej zaliczonej serii, więc nie ma czego zapisać. Odhacz serię albo odrzuć trening."
+      },
       "progress": "{{done}}/{{total}} serii",
       "volume": "{{kg}} kg",
       "setNo": "Seria {{n}}",
@@ -3726,6 +3740,7 @@
       "volume": "Objętość",
       "openActivity": "Otwórz aktywność",
       "backToPlan": "Wróć do planu",
+      "close": "Gotowe",
       "skippedTitle": "Sesja pominięta"
     },
     "history": {

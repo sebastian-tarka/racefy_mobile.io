@@ -155,8 +155,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
     useNextWorkoutSession(isAuthenticated);
   const friendsToday = useFriendsToday(isAuthenticated);
   const refetchFriendsToday = friendsToday.refetch;
-  const { start: startStrength, busyWorkoutId: startingStrengthId } = useStartWorkoutSession(
-    (sessionId) => navigation.getParent()?.navigate('WorkoutSession', { sessionId }),
+  const {
+    start: startStrength,
+    busyWorkoutId: startingStrengthId,
+    startFree: startFreeStrength,
+  } = useStartWorkoutSession((sessionId) =>
+    navigation.getParent()?.navigate('WorkoutSession', { sessionId }),
   );
 
   const [refreshing, setRefreshing] = useState(false);
@@ -606,6 +610,13 @@ export function DynamicHomeScreen({ navigation }: Props) {
               title: t('home.startActions.start'),
               description: t('home.startActions.startDesc'),
               onPress: () => navigation.navigate('Record'),
+            },
+            {
+              id: 'strength',
+              icon: 'barbell-outline',
+              title: t('home.startActions.strength'),
+              description: t('home.startActions.strengthDesc'),
+              onPress: () => void startFreeStrength(),
             },
             {
               id: 'trainings',

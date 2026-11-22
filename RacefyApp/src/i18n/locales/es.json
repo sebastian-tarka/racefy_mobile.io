@@ -185,6 +185,8 @@
       "title": "Inicia una actividad",
       "start": "Grabar nueva actividad",
       "startDesc": "Sigue por GPS en tiempo real",
+      "strength": "Entrenamiento de fuerza",
+      "strengthDesc": "Sin plan, añade ejercicios sobre la marcha",
       "trainings": "Mostrar entrenamientos",
       "trainingsDesc": "Explora tu plan de entrenamiento",
       "import": "Importar desde GPX",
@@ -3428,6 +3430,8 @@
     "emptyHint": "Crea un plan desde cero o importa una hoja de cálculo.",
     "newPlan": "Plan nuevo",
     "importXlsx": "Importar hoja de cálculo",
+    "quickWorkout": "Entrenamiento libre",
+    "quickWorkoutDesc": "Sin plan, añade ejercicios sobre la marcha",
     "library": "Biblioteca de ejercicios",
     "status": {
       "draft": "Borrador",
@@ -3665,6 +3669,16 @@
       "backToPlanned": "Volver a planificado"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Entrenamiento libre",
+        "emptyTitle": "Añade tu primer ejercicio",
+        "emptyHint": "Añade ejercicios mientras entrenas. Le pondremos nombre al terminar, según los grupos musculares trabajados.",
+        "addFirstExercise": "Añadir primer ejercicio",
+        "addExercise": "Añadir ejercicio",
+        "discard": "Descartar entrenamiento",
+        "confirmDiscard": "¿Descartar este entrenamiento? No se guardará nada.",
+        "nothingLogged": "Aún no hay ninguna serie completada, así que no hay nada que guardar. Completa una serie o descarta el entrenamiento."
+      },
       "progress": "{{done}}/{{total}} series",
       "volume": "{{kg}} kg",
       "setNo": "Serie {{n}}",
@@ -3730,6 +3744,7 @@
       "volume": "Volumen",
       "openActivity": "Abrir actividad",
       "backToPlan": "Volver al plan",
+      "close": "Listo",
       "skippedTitle": "Sesión saltada"
     },
     "history": {

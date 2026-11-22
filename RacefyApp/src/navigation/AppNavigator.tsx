@@ -23,6 +23,7 @@ import { useNavBadges, useNavBadgesRunner } from '../hooks/useNavBadges';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityStatus } from '../hooks/useLiveActivity';
 import { useCurrentWorkoutSession } from '../hooks/useCurrentWorkoutSession';
+import { useStartWorkoutSession } from '../hooks/useStartWorkoutSession';
 import { useMaintenance } from '../hooks/useMaintenance';
 import { useAppVersion } from '../hooks/useAppVersion';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -331,6 +332,9 @@ function MainTabNavigator() {
   const { current: workoutSession } = useCurrentWorkoutSession(isAuthenticated);
   const strengthOnly = !activity && !!workoutSession;
   const [startSheetVisible, setStartSheetVisible] = useState(false);
+  const { startFree: startFreeStrength } = useStartWorkoutSession((sessionId) =>
+    navigation.navigate('WorkoutSession', { sessionId }),
+  );
 
   const resumeStrength = useCallback(() => {
     triggerHaptic();
@@ -466,6 +470,13 @@ function MainTabNavigator() {
               title: t('home.startActions.start'),
               description: t('home.startActions.startDesc'),
               onPress: () => navigation.navigate('Main', { screen: 'Record' }),
+            },
+            {
+              id: 'strength',
+              icon: 'barbell-outline',
+              title: t('home.startActions.strength'),
+              description: t('home.startActions.strengthDesc'),
+              onPress: () => void startFreeStrength(),
             },
             {
               id: 'trainings',

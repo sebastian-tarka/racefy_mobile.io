@@ -291,13 +291,13 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
    * change refers to — so this one stays online-only.
    */
   const addSet = useCallback(
-    async (input: WorkoutSessionAddSetInput) => {
+    async (input: WorkoutSessionAddSetInput): Promise<WorkoutSessionSet | null> => {
       try {
         // Earlier changes first, so the new set lands after them.
         await strengthOutbox.flush();
         const created = await api.addWorkoutSessionSet(sessionId, input);
         const current = sessionRef.current;
-        if (!current?.exercises) return;
+        if (!current?.exercises) return created;
         const exists = current.exercises.some((ex) => ex.exercise_order === created.exercise_order);
         if (exists) {
           commit({
@@ -316,16 +316,34 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
           // Ad-hoc exercise: the server built a new group — reload to get its header.
           await reload();
         }
+        return created;
       } catch (error) {
         onErrorRef.current(
           isNetworkFailure(error)
             ? i18n.t('strengthPlans.session.offline.addSet')
             : getErrorMessage(error),
         );
+        return null;
       }
     },
     [sessionId, commit, reload],
   );
+
+  /**
+   * Throw the session away (DELETE). Meant for a free-form session nothing was
+   * logged in — the API refuses to complete it, and skipping would leave an
+   * empty "skipped" row in the history. Online-only, like skip.
+   */
+  const discard = useCallback(async () => {
+    await strengthOutbox.flush();
+    if (strengthOutbox.hasPending(sessionId)) {
+      throw new Error(i18n.t('strengthPlans.session.offline.skip'));
+    }
+    await api.deleteWorkoutSession(sessionId);
+    strengthOutbox.clearSnapshot(sessionId);
+    setRest(null);
+    emitRefresh('workouts');
+  }, [sessionId]);
 
   const removeSet = useCallback(
     async (setId: number) => {
@@ -435,6 +453,7 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     removeSet,
     complete,
     skip,
+    discard,
   };
 }
 

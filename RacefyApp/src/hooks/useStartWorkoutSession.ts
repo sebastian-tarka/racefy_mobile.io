@@ -11,6 +11,9 @@ interface UseStartWorkoutSession {
   start: (workoutId: number, scheduledFor?: string) => Promise<void>;
   /** Id of the workout currently being started, for a spinner on its button. */
   busyWorkoutId: number | null;
+  /** Starts a free-form session (no plan) — or offers the one already open. */
+  startFree: () => Promise<void>;
+  isStartingFree: boolean;
 }
 
 /**
@@ -105,5 +108,23 @@ export function useStartWorkoutSession(
     [onOpen, t, handleConflict],
   );
 
-  return { start, busyWorkoutId };
+  const [isStartingFree, setIsStartingFree] = useState(false);
+
+  /** A free-form session has no day to be "already logged" on — only an open one can block it. */
+  const startFree = useCallback(async () => {
+    setIsStartingFree(true);
+    try {
+      const session = await api.startFreeWorkoutSession();
+      emitRefresh('workouts');
+      onOpen(session.id);
+    } catch (error) {
+      if (!handleConflict(error, () => {})) {
+        Alert.alert('', getErrorMessage(error) || t('common.error'));
+      }
+    } finally {
+      setIsStartingFree(false);
+    }
+  }, [onOpen, t, handleConflict]);
+
+  return { start, busyWorkoutId, startFree, isStartingFree };
 }
