@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { fontSize } from '../theme';
 
-export type Visibility = 'public' | 'followers' | 'private';
+type Visibility = 'public' | 'followers' | 'private';
 
 /**
  * Who can see a post or an activity — the same mark as the web app's VisibilityBadge:

@@ -162,7 +162,7 @@ export interface CommentaryMention {
   name: string;
 }
 
-export type CommentarySegment = { text: string; username?: string };
+type CommentarySegment = { text: string; username?: string };
 
 /**
  * Split commentary text into plain parts and "@handle" parts of the participants the API lists in
