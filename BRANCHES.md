@@ -15,14 +15,21 @@ Stan na: **2026-11-23**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feat/strength-free-session` — trening siłowy dowolny, bez planu (od 2026-11-22)
+_Pusto (2026-11-23: `feat/strength-free-session` zmergowane — niżej)._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `feat/strength-free-session` — trening siłowy dowolny, bez planu (zmergowane 2026-11-23, tag `pre-strength-free-session` = main sprzed merge)
 
 Start treningu siłowego bez planu: pusta sesja, ćwiczenia dodawane w trakcie, nazwa nadawana przez API przy
 zakończeniu z dwóch najczęściej trenowanych partii („Trening siłowy · Klatka, Ramiona”). Start z arkusza Start
 (Home + przytrzymanie FAB) i z listy planów („Trening dowolny”). Ekran sesji: pusty stan, „Dodaj ćwiczenie”
 (biblioteka, szybka nowa nazwa albo pełny formularz z partią mięśni → powrót do sesji), „+ seria” także dla
 ćwiczeń ad hoc, „Odrzuć trening” (DELETE) zamiast „Pomiń”, „Zakończ” bez zaliczonej serii proponuje odrzucenie.
-i18n pl/en/es. `tsc`, eslint, jest (942) zielone.
+i18n pl/en/es. `tsc`, eslint, knip, jest (944) zielone.
 **API na produkcji od v1.3.100 (2026-11-22; prod 1.3.104) — merge już nie czeka na backend.**
 - [x] Arkusz Start → „Trening siłowy” otwiera pustą sesję (emulator Android, lokalne API)
 - [x] Ćwiczenie z biblioteki: seria z ostatnim ciężarem i przerwą 90 s; „+ seria” dla ćwiczenia ad hoc (emulator)
@@ -47,11 +54,6 @@ Dodatkowo na tej samej gałęzi (2026-11-22):
 - [x] Okno wersji roboczych: mapa, statystyki, przewijanie „2 z 5”, zmiana widoczności (emulator)
 - [x] Wersje robocze: publikacja pojedyncza i „Opublikuj wszystkie” — post i aktywność dostają wybraną widoczność (emulator + baza, 2026-11-23)
 - [x] Wersje robocze bez GPS (trening siłowy, ręczna aktywność) — karta bez mapy wygląda dobrze (emulator, trening siłowy, 2026-11-23)
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `feat/visibility-badge` — znacznik widoczności aktywności i postów (zmergowane 2026-11-10, tag `pre-visibility-badge` = main sprzed merge)
 
