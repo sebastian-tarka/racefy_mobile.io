@@ -21,11 +21,11 @@ Przy zimnym starcie `initAuth` kasował token przy **każdym** błędzie `GET /u
 timeoucie czy 5xx — i użytkownik lądował na ekranie gościa, a po powrocie sieci musiał logować się od nowa
 (znalezione na emulatorze 2026-11-23). Teraz błąd sieci/serwera zostawia token, apka pokazuje ostatni znany
 profil (cache w AsyncStorage, czyszczony przy wylogowaniu jak reszta danych konta) i po powrocie sieci sama
-ponawia weryfikację (z odstępem). 401 obsługuje jak dotąd `base.ts`.
-- [ ] Zimny start w trybie samolotowym: zalogowany, Home z danymi z cache, bez ekranu gościa
-- [ ] Po włączeniu sieci: profil i preferencje odświeżają się bez ponownego logowania
-- [ ] Token unieważniony na serwerze (wylogowanie z innego urządzenia / usunięty token) → start online kończy się ekranem logowania
-- [ ] Wylogowanie → zimny start offline: ekran gościa (cache profilu usunięty)
+ponawia weryfikację (z odstępem). 401 obsługuje jak dotąd `base.ts`. `tsc`, eslint, knip, jest (949) zielone.
+- [x] Zimny start w trybie samolotowym: zalogowany, Home z danymi z cache, bez ekranu gościa (emulator, 2026-11-23)
+- [x] Po włączeniu sieci: profil i preferencje odświeżają się bez ponownego logowania (emulator — sesja weryfikuje się ~5 s po powrocie sieci; treść Home zostaje z cache do odświeżenia, osobna sprawa)
+- [x] Token unieważniony na serwerze (wylogowanie z innego urządzenia / usunięty token) → start online kończy się ekranem logowania (emulator, tokeny usunięte w bazie)
+- [ ] Wylogowanie → zimny start offline: ekran gościa (cache profilu usunięty) — przez 401 sprawdzone (ta sama `teardownLocalSession`, klucz znika z RKStorage), przyciskiem „Wyloguj” jeszcze nie
 
 ## Na `main`, ale niezweryfikowane runtime
 
