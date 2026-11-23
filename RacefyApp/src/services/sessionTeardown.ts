@@ -18,6 +18,7 @@ import { logger } from './logger';
  */
 const USER_SCOPED_STORAGE_KEYS: readonly string[] = [
   // Cached server data
+  '@racefy_cached_user', // services/userCache — profile for an offline cold start
   '@racefy_home_data',
   '@racefy_home_config',
   '@racefy_seen_ranks',
