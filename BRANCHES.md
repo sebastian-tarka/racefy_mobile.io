@@ -15,7 +15,14 @@ Stan na: **2026-11-23**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `fix/offline-cold-start` — start apki bez sieci nie wylogowuje (od 2026-11-23)
+_Pusto (2026-11-23: `fix/offline-cold-start` zmergowane — niżej)._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `fix/offline-cold-start` — start apki bez sieci nie wylogowuje (zmergowane 2026-11-23, tag `pre-offline-cold-start` = main sprzed merge)
 
 Przy zimnym starcie `initAuth` kasował token przy **każdym** błędzie `GET /user` — także przy braku sieci,
 timeoucie czy 5xx — i użytkownik lądował na ekranie gościa, a po powrocie sieci musiał logować się od nowa
@@ -26,11 +33,6 @@ ponawia weryfikację (z odstępem). 401 obsługuje jak dotąd `base.ts`. `tsc`, 
 - [x] Po włączeniu sieci: profil i preferencje odświeżają się bez ponownego logowania (emulator — sesja weryfikuje się ~5 s po powrocie sieci; treść Home zostaje z cache do odświeżenia, osobna sprawa)
 - [x] Token unieważniony na serwerze (wylogowanie z innego urządzenia / usunięty token) → start online kończy się ekranem logowania (emulator, tokeny usunięte w bazie)
 - [ ] Wylogowanie → zimny start offline: ekran gościa (cache profilu usunięty) — przez 401 sprawdzone (ta sama `teardownLocalSession`, klucz znika z RKStorage), przyciskiem „Wyloguj” jeszcze nie
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `feat/strength-free-session` — trening siłowy dowolny, bez planu (zmergowane 2026-11-23, tag `pre-strength-free-session` = main sprzed merge)
 
