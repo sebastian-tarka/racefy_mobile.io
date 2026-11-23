@@ -31,6 +31,9 @@ import {
 import * as trackingDb from '../services/trackingDb';
 import type { ImpersonationSession, LoginRequest, RegisterRequest, User } from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { loadCachedUser, saveCachedUser } from '../services/userCache';
+import { isNetworkFailure } from '../utils/errors';
 
 interface AuthContextType {
   user: User | null;
@@ -63,6 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     null,
   );
   const [originalAdminToken, setOriginalAdminToken] = useState<string | null>(null);
+  /** Started without the server (offline / 5xx) — validate the token once it is reachable. */
+  const [needsRevalidation, setNeedsRevalidation] = useState(false);
+  const revalidationAttempts = useRef(0);
 
   const { startImpersonation, stopImpersonation, restoreAdminToken, clearImpersonationState } =
     useImpersonationActions(
@@ -168,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(null);
     setRequiresConsent(false);
+    setNeedsRevalidation(false);
   }, [clearImpersonationState]);
 
   // The 401 callback is registered once (see the effect below) and must stay stable,
@@ -258,7 +265,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Configure Google Sign-In early so it's ready when needed
       configureGoogleSignIn();
       await api.init(); // Loads token from secure storage (could be impersonation or admin token)
+      await restoreSession();
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
+  /**
+   * Validate the stored token with the server and load the account. Runs at start
+   * and again when the network comes back after an offline start.
+   *
+   * Only the server rejecting the token ends the session (a 401 is handled in
+   * `base.ts`, which clears it and calls `handleUnauthorized`). No answer at all —
+   * airplane mode, timeout, 5xx — keeps the token: the user stays signed in with
+   * the last cached profile, and `needsRevalidation` retries once online.
+   */
+  async function restoreSession() {
+    try {
       // Check if we have impersonation state (tokens in secure storage, session metadata in AsyncStorage)
       const impersonationToken = await secureStorage.getImpersonationToken();
       const originalToken = await secureStorage.getAdminToken();
@@ -285,6 +308,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await restoreAdminToken(originalToken);
           }
         } catch (error) {
+          // No answer is not an expired session — keep impersonating, retry when online.
+          if (isNetworkFailure(error)) throw error;
           logger.error('auth', 'Failed to validate impersonation session', { error });
           await restoreAdminToken(originalToken);
         }
@@ -297,9 +322,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         revenueCatLogIn(userData.id).catch(() => {});
         // Sync language preference from server after auth
         syncPreferences();
-        // Check consent status for existing authenticated users
-        const status = await getConsentStatus();
-        setRequiresConsent(!status.accepted);
+        // Check consent status for existing authenticated users. Its own failure must
+        // not end a session whose token the server has just accepted.
+        await checkConsentStatus();
         // Register for push notifications (non-blocking)
         pushNotificationService.registerWithBackend().catch((error) => {
           logger.warn('auth', 'Failed to register for push notifications during init', { error });
@@ -307,14 +332,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         logger.auth('No token found, user not authenticated');
       }
+      revalidationAttempts.current = 0;
     } catch (error) {
+      if (isNetworkFailure(error) && api.isAuthenticated()) {
+        logger.warn('auth', 'Server unreachable at start, keeping the session', { error });
+        // While impersonating the cache holds the admin's own profile — don't show it.
+        const impersonating = !!(await secureStorage.getImpersonationToken());
+        const cached = impersonating ? null : await loadCachedUser();
+        if (cached) setUser((current) => current ?? cached);
+        setNeedsRevalidation(true);
+        return;
+      }
       logger.error('auth', 'Auth initialization failed', { error });
       await api.clearToken();
       await clearImpersonationState();
-    } finally {
-      setIsLoading(false);
     }
   }
+
+  // After an offline start: retry restoreSession once the network is back. The
+  // delay grows (5 s, 10 s, 20 s … 60 s) so a server answering 5xx to a phone that
+  // is online isn't hammered in a loop.
+  const restoreSessionRef = useRef(restoreSession);
+  restoreSessionRef.current = restoreSession;
+  useEffect(() => {
+    if (!needsRevalidation) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (timer) clearTimeout(timer);
+      if (state.isConnected === false || state.isInternetReachable === false) return;
+      const delay = Math.min(60_000, 5_000 * 2 ** revalidationAttempts.current);
+      timer = setTimeout(() => {
+        revalidationAttempts.current += 1;
+        setNeedsRevalidation(false);
+        logger.auth('Network back, validating the session');
+        void restoreSessionRef.current();
+      }, delay);
+    });
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
+  }, [needsRevalidation]);
+
+  // Keep the offline-start profile current. Not while impersonating: the cache
+  // must describe the account whose token sits in SecureStore as the main one.
+  useEffect(() => {
+    if (user && !isImpersonating) void saveCachedUser(user);
+  }, [user, isImpersonating]);
 
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
