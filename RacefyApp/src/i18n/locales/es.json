@@ -185,6 +185,8 @@
       "title": "Inicia una actividad",
       "start": "Grabar nueva actividad",
       "startDesc": "Sigue por GPS en tiempo real",
+      "strength": "Entrenamiento de fuerza",
+      "strengthDesc": "Sin plan, añade ejercicios sobre la marcha",
       "trainings": "Mostrar entrenamientos",
       "trainingsDesc": "Explora tu plan de entrenamiento",
       "import": "Importar desde GPX",
@@ -423,6 +425,21 @@
     "reminderSubtitle": "Revisa y publica tus borradores",
     "viewAll": "Ver todos los borradores",
     "dismissReminder": "Más tarde",
+    "reminderCount_one": "Tienes {{count}} actividad sin publicar",
+    "reminderCount_many": "Tienes {{count}} actividades sin publicar",
+    "reminderCount_other": "Tienes {{count}} actividades sin publicar",
+    "reminderHint": "Publícalas para que tus amigos las vean. Las estadísticas y los puntos ya cuentan.",
+    "publishAll": "Publicar todas ({{count}})",
+    "confirmPublishAll": "¿Publicar {{count}} borradores? Serán visibles según su configuración de visibilidad.",
+    "pageOf": "{{index}} de {{total}}",
+    "visibilityLabel": "Quién lo verá",
+    "viewAllShort": "Todos los borradores",
+    "aiShort": "IA",
+    "untitled": "Actividad sin título",
+    "stat": {
+      "distance": "distancia",
+      "time": "tiempo"
+    },
     "unpublishedNote_one": "{{count}} actividad grabada sin publicar. Al publicarla conservas tus estadísticas y puntos.",
     "unpublishedNote_other": "{{count}} actividades grabadas sin publicar. Al publicarlas conservas tus estadísticas y puntos."
   },
@@ -3428,6 +3445,8 @@
     "emptyHint": "Crea un plan desde cero o importa una hoja de cálculo.",
     "newPlan": "Plan nuevo",
     "importXlsx": "Importar hoja de cálculo",
+    "quickWorkout": "Entrenamiento libre",
+    "quickWorkoutDesc": "Sin plan, añade ejercicios sobre la marcha",
     "library": "Biblioteca de ejercicios",
     "status": {
       "draft": "Borrador",
@@ -3572,7 +3591,11 @@
       "title": "Elegir ejercicio",
       "search": "Buscar ejercicios…",
       "createNew": "Añadir «{{name}}» como ejercicio nuevo",
+      "newWithForm": "Nuevo ejercicio",
+      "newWithFormNamed": "Nuevo ejercicio «{{name}}»",
+      "newWithFormHint": "Con grupo muscular, material y vídeo",
       "noResults": "No hay resultados: escribe un nombre para crearlo",
+      "offline": "Sin conexión: la biblioteca de ejercicios se cargará cuando vuelvas a estar en línea.",
       "global": "Global",
       "mine": "Míos"
     },
@@ -3665,6 +3688,16 @@
       "backToPlanned": "Volver a planificado"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Entrenamiento libre",
+        "emptyTitle": "Añade tu primer ejercicio",
+        "emptyHint": "Añade ejercicios mientras entrenas. Le pondremos nombre al terminar, según los grupos musculares trabajados.",
+        "addFirstExercise": "Añadir primer ejercicio",
+        "addExercise": "Añadir ejercicio",
+        "discard": "Descartar entrenamiento",
+        "confirmDiscard": "¿Descartar este entrenamiento? No se guardará nada.",
+        "nothingLogged": "Aún no hay ninguna serie completada, así que no hay nada que guardar. Completa una serie o descarta el entrenamiento."
+      },
       "progress": "{{done}}/{{total}} series",
       "volume": "{{kg}} kg",
       "setNo": "Serie {{n}}",
@@ -3704,6 +3737,7 @@
         "pending_other": "Sin conexión · {{count}} cambios pendientes",
         "completeQueued": "Entrenamiento guardado en el teléfono. Lo enviaremos y añadiremos la actividad cuando vuelva la conexión.",
         "addSet": "Para añadir una serie necesitas conexión. Puedes seguir registrando las demás series sin conexión.",
+        "addExercise": "Para añadir un ejercicio necesitas conexión. Puedes seguir registrando las series que ya tienes sin conexión.",
         "skip": "No puedes omitir el entrenamiento sin conexión: algunas series aún esperan a enviarse."
       }
     },
@@ -3711,6 +3745,14 @@
       "title": "Terminar entrenamiento",
       "rpe": "Esfuerzo (RPE)",
       "rpeHint": "1 = muy fácil · 10 = al límite",
+      "rpeLevels": {
+        "easy": "Suave",
+        "moderate": "Moderado",
+        "hard": "Duro",
+        "veryHard": "Muy duro",
+        "max": "Al máximo"
+      },
+      "notesPlaceholder": "¿Cómo fue? ¿Algo que cambiar la próxima vez?",
       "duration": "Duración del entrenamiento",
       "durationOverrun": "El cronómetro siguió corriendo porque la sesión no se terminó. Comprueba cuánto duró realmente el entrenamiento.",
       "hours": "Horas",
@@ -3730,6 +3772,7 @@
       "volume": "Volumen",
       "openActivity": "Abrir actividad",
       "backToPlan": "Volver al plan",
+      "close": "Listo",
       "skippedTitle": "Sesión saltada"
     },
     "history": {

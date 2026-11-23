@@ -82,9 +82,21 @@ export type RootStackParamList = {
   WorkoutDetail: { planId: number; workoutId: number };
   WorkoutExerciseForm: { planId: number; workoutId: number; workoutExerciseId?: number };
   ExerciseLibrary: undefined;
-  ExerciseForm: { exerciseId?: number } | undefined;
+  ExerciseForm:
+    | {
+        exerciseId?: number;
+        /** Prefills the name of a new exercise (typed in the picker). */
+        name?: string;
+        /** Creating from an open session: go back to it and add the new exercise there. */
+        addToSessionId?: number;
+      }
+    | undefined;
   WorkoutSchedule: { planId: number };
-  WorkoutSession: { sessionId: number };
+  WorkoutSession: {
+    sessionId: number;
+    /** Set by ExerciseForm after creating an exercise from this session: add it now. */
+    addExerciseId?: number;
+  };
   // Training Reminders
   TrainingReminders: undefined;
   // Teams

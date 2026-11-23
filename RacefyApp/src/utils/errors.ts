@@ -40,6 +40,15 @@ export function getErrorStatus(error: unknown): number | undefined {
   return isApiError(error) ? error.status : undefined;
 }
 
+/**
+ * No usable answer from the server: no HTTP status at all (offline, DNS, timeout)
+ * or a 5xx / 429 — worth retrying later rather than showing as the user's mistake.
+ */
+export function isNetworkFailure(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  return status == null || status >= 500 || status === 429;
+}
+
 /** `code` of a native module error (Google Sign-In, expo-sharing…). */
 export function getErrorCode(error: unknown): string | undefined {
   if (typeof error !== 'object' || error === null) return undefined;

@@ -185,6 +185,8 @@
       "title": "Rozpocznij aktywność",
       "start": "Nagraj nową aktywność",
       "startDesc": "Śledź GPS w czasie rzeczywistym",
+      "strength": "Trening siłowy",
+      "strengthDesc": "Bez planu, ćwiczenia dodajesz w trakcie",
       "trainings": "Pokaż treningi",
       "trainingsDesc": "Przeglądaj swój plan treningowy",
       "import": "Importuj z pliku GPX",
@@ -435,6 +437,22 @@
     "reminderSubtitle": "Przejrzyj i opublikuj swoje wersje robocze",
     "viewAll": "Zobacz wszystkie wersje robocze",
     "dismissReminder": "Później",
+    "reminderCount_one": "Masz {{count}} nieopublikowaną aktywność",
+    "reminderCount_few": "Masz {{count}} nieopublikowane aktywności",
+    "reminderCount_many": "Masz {{count}} nieopublikowanych aktywności",
+    "reminderCount_other": "Masz {{count}} nieopublikowanych aktywności",
+    "reminderHint": "Opublikuj, a znajomi je zobaczą. Statystyki i punkty już się liczą.",
+    "publishAll": "Opublikuj wszystkie ({{count}})",
+    "confirmPublishAll": "Opublikować {{count}} wersje robocze? Będą widoczne zgodnie z ich ustawieniami widoczności.",
+    "pageOf": "{{index}} z {{total}}",
+    "visibilityLabel": "Kto zobaczy",
+    "viewAllShort": "Wszystkie wersje robocze",
+    "aiShort": "AI",
+    "untitled": "Aktywność bez tytułu",
+    "stat": {
+      "distance": "dystans",
+      "time": "czas"
+    },
     "unpublishedNote_one": "{{count}} nagrana aktywność jest nieopublikowana. Publikacja zachowuje statystyki i punkty.",
     "unpublishedNote_few": "{{count}} nagrane aktywności są nieopublikowane. Publikacja zachowuje statystyki i punkty.",
     "unpublishedNote_many": "{{count}} nagranych aktywności jest nieopublikowanych. Publikacja zachowuje statystyki i punkty.",
@@ -3423,6 +3441,8 @@
     "emptyHint": "Ułóż plan od zera albo zaimportuj arkusz.",
     "newPlan": "Nowy plan",
     "importXlsx": "Importuj arkusz",
+    "quickWorkout": "Trening dowolny",
+    "quickWorkoutDesc": "Bez planu, ćwiczenia dodajesz w trakcie",
     "library": "Biblioteka ćwiczeń",
     "status": {
       "draft": "Szkic",
@@ -3567,7 +3587,11 @@
       "title": "Wybierz ćwiczenie",
       "search": "Szukaj ćwiczeń…",
       "createNew": "Dodaj „{{name}}” jako nowe ćwiczenie",
+      "newWithForm": "Nowe ćwiczenie",
+      "newWithFormNamed": "Nowe ćwiczenie „{{name}}”",
+      "newWithFormHint": "Z partią mięśni, sprzętem i filmem",
       "noResults": "Nic nie znaleziono — wpisz nazwę, aby utworzyć",
+      "offline": "Brak połączenia — biblioteka ćwiczeń wczyta się, gdy wrócisz do sieci.",
       "global": "Globalne",
       "mine": "Moje"
     },
@@ -3660,6 +3684,16 @@
       "backToPlanned": "Przywróć do zaplanowanych"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Trening dowolny",
+        "emptyTitle": "Dodaj pierwsze ćwiczenie",
+        "emptyHint": "Ćwiczenia dodajesz w trakcie treningu. Nazwę nadamy po zakończeniu, na podstawie trenowanych partii.",
+        "addFirstExercise": "Dodaj pierwsze ćwiczenie",
+        "addExercise": "Dodaj ćwiczenie",
+        "discard": "Odrzuć trening",
+        "confirmDiscard": "Odrzucić ten trening? Nic nie zostanie zapisane.",
+        "nothingLogged": "Nie ma jeszcze żadnej zaliczonej serii, więc nie ma czego zapisać. Odhacz serię albo odrzuć trening."
+      },
       "progress": "{{done}}/{{total}} serii",
       "volume": "{{kg}} kg",
       "setNo": "Seria {{n}}",
@@ -3700,6 +3734,7 @@
         "pending_other": "Bez sieci · {{count}} zmian czeka",
         "completeQueued": "Trening zapisany na telefonie. Wyślemy go i dodamy aktywność, gdy wróci internet.",
         "addSet": "Dodanie serii wymaga internetu. Pozostałe serie możesz zapisywać bez sieci.",
+        "addExercise": "Dodanie ćwiczenia wymaga internetu. Serie, które już masz, możesz zapisywać bez sieci.",
         "skip": "Nie da się pominąć treningu bez internetu — część serii czeka jeszcze na wysłanie."
       }
     },
@@ -3707,6 +3742,14 @@
       "title": "Zakończ trening",
       "rpe": "Wysiłek (RPE)",
       "rpeHint": "1 = bardzo lekko · 10 = maksymalnie",
+      "rpeLevels": {
+        "easy": "Lekko",
+        "moderate": "Umiarkowanie",
+        "hard": "Ciężko",
+        "veryHard": "Bardzo ciężko",
+        "max": "Maksimum"
+      },
+      "notesPlaceholder": "Jak poszło? Co zmienić następnym razem?",
       "duration": "Czas treningu",
       "durationOverrun": "Licznik chodził dalej, bo sesja nie została zakończona. Sprawdź, ile trening trwał naprawdę.",
       "hours": "Godziny",
@@ -3726,6 +3769,7 @@
       "volume": "Objętość",
       "openActivity": "Otwórz aktywność",
       "backToPlan": "Wróć do planu",
+      "close": "Gotowe",
       "skippedTitle": "Sesja pominięta"
     },
     "history": {

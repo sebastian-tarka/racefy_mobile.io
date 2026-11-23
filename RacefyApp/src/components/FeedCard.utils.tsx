@@ -206,7 +206,8 @@ export function getEffortLevel(
   meters: number,
   seconds: number,
 ): { label: string; emoji: string } | null {
-  if (meters === 0 || seconds === 0) return null;
+  // No distance (strength, gym, manual entry) → no pace → no effort guess.
+  if (!meters || !seconds) return null;
   const paceSecondsPerKm = (seconds / meters) * 1000;
   const name = (sportName || '').toLowerCase();
   let easy: number, moderate: number;

@@ -185,6 +185,8 @@
       "title": "Start an activity",
       "start": "Record new activity",
       "startDesc": "Track with GPS in real time",
+      "strength": "Strength training",
+      "strengthDesc": "No plan, add exercises as you go",
       "trainings": "Show trainings",
       "trainingsDesc": "Browse your training plan",
       "import": "Import from GPX",
@@ -419,6 +421,20 @@
     "reminderSubtitle": "Review and publish your drafts",
     "viewAll": "View all drafts",
     "dismissReminder": "Later",
+    "reminderCount_one": "You have {{count}} unpublished activity",
+    "reminderCount_other": "You have {{count}} unpublished activities",
+    "reminderHint": "Publish so your friends can see them. Stats and points already count.",
+    "publishAll": "Publish all ({{count}})",
+    "confirmPublishAll": "Publish {{count}} drafts? They will be visible according to their visibility settings.",
+    "pageOf": "{{index}} of {{total}}",
+    "visibilityLabel": "Who can see it",
+    "viewAllShort": "All drafts",
+    "aiShort": "AI",
+    "untitled": "Untitled activity",
+    "stat": {
+      "distance": "distance",
+      "time": "time"
+    },
     "unpublishedNote_one": "{{count}} recorded activity is unpublished. Publishing keeps your stats and points.",
     "unpublishedNote_other": "{{count}} recorded activities are unpublished. Publishing keeps your stats and points."
   },
@@ -3366,6 +3382,8 @@
     "emptyHint": "Build a plan from scratch or import a spreadsheet.",
     "newPlan": "New plan",
     "importXlsx": "Import spreadsheet",
+    "quickWorkout": "Free workout",
+    "quickWorkoutDesc": "No plan, add exercises as you go",
     "library": "Exercise library",
     "status": {
       "draft": "Draft",
@@ -3510,7 +3528,11 @@
       "title": "Choose exercise",
       "search": "Search exercises…",
       "createNew": "Add “{{name}}” as a new exercise",
+      "newWithForm": "New exercise",
+      "newWithFormNamed": "New exercise “{{name}}”",
+      "newWithFormHint": "With muscle group, equipment and video",
       "noResults": "Nothing found — type a name to create it",
+      "offline": "No connection — the exercise library will load when you are back online.",
       "global": "Global",
       "mine": "Mine"
     },
@@ -3603,6 +3625,16 @@
       "backToPlanned": "Back to planned"
     },
     "session": {
+      "freeform": {
+        "subtitle": "Free workout",
+        "emptyTitle": "Add your first exercise",
+        "emptyHint": "Add exercises as you train. We name the workout when you finish, after the muscle groups you trained.",
+        "addFirstExercise": "Add first exercise",
+        "addExercise": "Add exercise",
+        "discard": "Discard workout",
+        "confirmDiscard": "Discard this workout? Nothing will be saved.",
+        "nothingLogged": "No set is completed yet, so there is nothing to save. Complete a set or discard the workout."
+      },
       "progress": "{{done}}/{{total}} sets",
       "volume": "{{kg}} kg",
       "setNo": "Set {{n}}",
@@ -3641,6 +3673,7 @@
         "pending_other": "Offline · {{count}} changes waiting",
         "completeQueued": "Workout saved on your phone. We'll send it and add the activity once you're back online.",
         "addSet": "Adding a set needs an internet connection. You can keep logging the other sets offline.",
+        "addExercise": "Adding an exercise needs an internet connection. You can keep logging the sets you already have offline.",
         "skip": "You can't skip a workout offline — some sets are still waiting to be sent."
       }
     },
@@ -3648,6 +3681,14 @@
       "title": "Finish workout",
       "rpe": "Effort (RPE)",
       "rpeHint": "1 = very easy · 10 = all out",
+      "rpeLevels": {
+        "easy": "Easy",
+        "moderate": "Moderate",
+        "hard": "Hard",
+        "veryHard": "Very hard",
+        "max": "All out"
+      },
+      "notesPlaceholder": "How did it go? Anything to change next time?",
       "duration": "Workout duration",
       "durationOverrun": "The timer kept running because the session wasn't finished. Check how long the workout really took.",
       "hours": "Hours",
@@ -3667,6 +3708,7 @@
       "volume": "Volume",
       "openActivity": "Open activity",
       "backToPlan": "Back to plan",
+      "close": "Done",
       "skippedTitle": "Session skipped"
     },
     "history": {

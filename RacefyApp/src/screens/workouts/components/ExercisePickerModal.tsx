@@ -15,6 +15,7 @@ import { ScreenContainer } from '../../../components';
 import { useTheme } from '../../../hooks/useTheme';
 import { api } from '../../../services/api';
 import { logger } from '../../../services/logger';
+import { isNetworkFailure } from '../../../utils/errors';
 import type { Exercise, ExerciseReference } from '../../../types/workouts';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 
@@ -23,6 +24,12 @@ interface Props {
   onClose: () => void;
   /** Either a library row (`{ id }`) or a brand-new name (`{ name }`). */
   onSelect: (ref: ExerciseReference, exercise?: Exercise) => void;
+  /**
+   * When given, a pinned "New exercise" button opens the full form (muscle
+   * group, equipment, video) with the typed name — the quick row above the
+   * results only creates a bare name in the "other" group.
+   */
+  onCreateWithForm?: (name: string) => void;
 }
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -32,12 +39,13 @@ const SEARCH_DEBOUNCE_MS = 250;
  * has yet offers to create it — the backend's `ExerciseResolver` does the
  * matching, so a near-duplicate still lands on the existing row.
  */
-export function ExercisePickerModal({ visible, onClose, onSelect }: Props) {
+export function ExercisePickerModal({ visible, onClose, onSelect, onCreateWithForm }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -46,9 +54,13 @@ export function ExercisePickerModal({ visible, onClose, onSelect }: Props) {
     const timer = setTimeout(async () => {
       try {
         const page = await api.listExercises({ q: query.trim() || undefined, per_page: 50 });
-        if (!cancelled) setResults(page.data);
+        if (!cancelled) {
+          setResults(page.data);
+          setOffline(false);
+        }
       } catch (err) {
         logger.warn('api', 'Exercise search failed', { error: err });
+        if (!cancelled && isNetworkFailure(err)) setOffline(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -132,7 +144,7 @@ export function ExercisePickerModal({ visible, onClose, onSelect }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={[styles.empty, { color: colors.textMuted }]}>
-                {t('strengthPlans.picker.noResults')}
+                {offline ? t('strengthPlans.picker.offline') : t('strengthPlans.picker.noResults')}
               </Text>
             ) : null
           }
@@ -163,6 +175,29 @@ export function ExercisePickerModal({ visible, onClose, onSelect }: Props) {
             </TouchableOpacity>
           )}
         />
+
+        {onCreateWithForm && (
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.formButton, { borderColor: colors.primary }]}
+              onPress={() => onCreateWithForm(trimmed)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="create-outline" size={18} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: colors.primary }]} numberOfLines={1}>
+                  {trimmed
+                    ? t('strengthPlans.picker.newWithFormNamed', { name: trimmed })
+                    : t('strengthPlans.picker.newWithForm')}
+                </Text>
+                <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {t('strengthPlans.picker.newWithFormHint')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
       </ScreenContainer>
     </Modal>
   );
@@ -228,6 +263,20 @@ const styles = StyleSheet.create({
   scope: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+  },
+  footer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+    borderTopWidth: 1,
+  },
+  formButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
   },
   empty: {
     textAlign: 'center',

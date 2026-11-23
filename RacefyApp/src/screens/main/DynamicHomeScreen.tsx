@@ -155,8 +155,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
     useNextWorkoutSession(isAuthenticated);
   const friendsToday = useFriendsToday(isAuthenticated);
   const refetchFriendsToday = friendsToday.refetch;
-  const { start: startStrength, busyWorkoutId: startingStrengthId } = useStartWorkoutSession(
-    (sessionId) => navigation.getParent()?.navigate('WorkoutSession', { sessionId }),
+  const {
+    start: startStrength,
+    busyWorkoutId: startingStrengthId,
+    startFree: startFreeStrength,
+  } = useStartWorkoutSession((sessionId) =>
+    navigation.getParent()?.navigate('WorkoutSession', { sessionId }),
   );
 
   const [refreshing, setRefreshing] = useState(false);
@@ -608,6 +612,13 @@ export function DynamicHomeScreen({ navigation }: Props) {
               onPress: () => navigation.navigate('Record'),
             },
             {
+              id: 'strength',
+              icon: 'barbell-outline',
+              title: t('home.startActions.strength'),
+              description: t('home.startActions.strengthDesc'),
+              onPress: () => void startFreeStrength(),
+            },
+            {
               id: 'trainings',
               icon: 'list-circle-outline',
               title: t('home.startActions.trainings'),
@@ -630,13 +641,20 @@ export function DynamicHomeScreen({ navigation }: Props) {
           visible={showDraftsModal}
           onClose={() => setShowDraftsModal(false)}
           drafts={reminderDrafts}
-          onPublish={async (postId) => {
-            await api.publishDraft(postId);
-            const remaining = reminderDrafts.filter((d) => d.id !== postId);
-            setReminderDrafts(remaining);
-            if (remaining.length === 0) {
-              setShowDraftsModal(false);
+          onPublish={async (postId, visibility) => {
+            // The activity rules who sees an activity post (and syncs the post),
+            // so a changed visibility goes onto the activity first.
+            const activity = reminderDrafts.find((d) => d.id === postId)?.activity;
+            if (activity && activity.visibility !== visibility) {
+              await api.updateActivity(activity.id, { visibility });
             }
+            await api.updatePost(postId, { status: 'published', visibility });
+            // Functional update: "Publish all" calls this several times in a row.
+            setReminderDrafts((prev) => {
+              const remaining = prev.filter((d) => d.id !== postId);
+              if (remaining.length === 0) setShowDraftsModal(false);
+              return remaining;
+            });
           }}
           onEdit={(draft) => {
             navigation.getParent()?.navigate('PostForm', { postId: draft.id });

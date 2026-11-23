@@ -1,8 +1,14 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../../components';
+import { StrengthFeedPanel, hasStrengthSession } from '../../../components/strength';
+import { StrengthExerciseCards } from '../../../components/strength/StrengthExerciseCards';
+import { StrengthProgressCard } from '../../../components/strength/StrengthProgressCard';
+import { api } from '../../../services/api';
+import { logger } from '../../../services/logger';
+import type { Activity } from '../../../types/api';
 import { useTheme } from '../../../hooks/useTheme';
 import { borderRadius, fontSize, heroColors, msFont, spacing } from '../../../theme';
 import type { WorkoutSession } from '../../../types/workouts';
@@ -19,7 +25,14 @@ interface Props {
   onBack: () => void;
 }
 
-/** After the session: done (sets, volume, time) or skipped (with a way back). */
+/**
+ * After the session: done (sets, volume, time) or skipped (with a way back).
+ *
+ * Once the activity exists, the screen shows what the feed will show — the
+ * set mosaic and volume, progress against last time and every exercise set by
+ * set (`strength_session` from GET /activities/{id}) — and the name the server
+ * gave the workout ("Strength training · Back" for a free-form one).
+ */
 export function WorkoutSessionSummary({
   session,
   activityId,
@@ -32,6 +45,26 @@ export function WorkoutSessionSummary({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const skipped = session.status === 'skipped';
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [loadingActivity, setLoadingActivity] = useState(activityId != null);
+
+  useEffect(() => {
+    if (activityId == null) return;
+    let alive = true;
+    setLoadingActivity(true);
+    api
+      .getActivity(activityId)
+      .then((a) => alive && setActivity(a))
+      .catch((error) => logger.debug('api', 'Summary: activity not loaded', { activityId, error }))
+      .finally(() => alive && setLoadingActivity(false));
+    return () => {
+      alive = false;
+    };
+  }, [activityId]);
+
+  const strength = hasStrengthSession(activity?.strength_session)
+    ? activity!.strength_session!
+    : null;
   const summary: [string, string][] = [
     [
       t('strengthPlans.complete.sets'),
@@ -62,70 +95,106 @@ export function WorkoutSessionSummary({
           )}
         </Text>
         <Text style={styles.summarySubtitle} numberOfLines={2}>
-          {session.workout_name}
+          {activity?.title ?? session.workout_name}
         </Text>
       </View>
 
       <View style={[styles.summaryBody, { backgroundColor: colors.background }]}>
-        {!skipped && (
-          <View style={styles.summaryStats}>
-            {summary.map(([label, value]) => (
-              <View
-                key={label}
-                style={[
-                  styles.summaryCard,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                ]}
-              >
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {!skipped && (
+            <View style={styles.summaryStats}>
+              {summary.map(([label, value]) => (
+                <View
+                  key={label}
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  ]}
+                >
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
-        {!skipped && pendingCount > 0 && (
-          <View
-            style={[
-              styles.offlineNotice,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
-            ]}
-          >
-            <Ionicons name="cloud-offline-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.offlineNoticeText, { color: colors.textSecondary }]}>
-              {t('strengthPlans.session.offline.completeQueued')}
-            </Text>
-          </View>
-        )}
+          {!skipped && pendingCount > 0 && (
+            <View
+              style={[
+                styles.offlineNotice,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="cloud-offline-outline" size={18} color={colors.textSecondary} />
+              <Text style={[styles.offlineNoticeText, { color: colors.textSecondary }]}>
+                {t('strengthPlans.session.offline.completeQueued')}
+              </Text>
+            </View>
+          )}
 
-        <View style={{ flex: 1 }} />
+          {!skipped && loadingActivity && (
+            <ActivityIndicator style={{ marginTop: spacing.lg }} color={colors.primary} />
+          )}
 
-        {skipped && (
+          {strength && (
+            <>
+              <StrengthFeedPanel
+                session={strength}
+                onPress={activityId != null ? () => onOpenActivity(activityId) : undefined}
+              />
+              <StrengthProgressCard session={strength} style={styles.card} />
+              <StrengthExerciseCards session={strength} style={styles.card} />
+            </>
+          )}
+        </ScrollView>
+
+        <View style={styles.actions}>
+          {skipped && (
+            <Button
+              title={t('strengthPlans.schedule.resumeSkipped')}
+              onPress={onResumeSkipped}
+              fullWidth
+            />
+          )}
+          {activityId != null && (
+            <Button
+              title={t('strengthPlans.complete.openActivity')}
+              onPress={() => onOpenActivity(activityId)}
+              fullWidth
+            />
+          )}
           <Button
-            title={t('strengthPlans.schedule.resumeSkipped')}
-            onPress={onResumeSkipped}
+            title={t(
+              session.is_freeform
+                ? 'strengthPlans.complete.close'
+                : 'strengthPlans.complete.backToPlan',
+            )}
+            variant="outline"
+            onPress={onBack}
             fullWidth
           />
-        )}
-        {activityId != null && (
-          <Button
-            title={t('strengthPlans.complete.openActivity')}
-            onPress={() => onOpenActivity(activityId)}
-            fullWidth
-          />
-        )}
-        <Button
-          title={t('strengthPlans.complete.backToPlan')}
-          variant="outline"
-          onPress={onBack}
-          fullWidth
-        />
+        </View>
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  card: {
+    marginBottom: 0,
+  },
+  actions: {
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+  },
   offlineNotice: {
     flexDirection: 'row',
     alignItems: 'center',
