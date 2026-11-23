@@ -15,7 +15,17 @@ Stan na: **2026-11-23**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Pusto (2026-11-23: `feat/strength-free-session` zmergowane — niżej)._
+### `fix/offline-cold-start` — start apki bez sieci nie wylogowuje (od 2026-11-23)
+
+Przy zimnym starcie `initAuth` kasował token przy **każdym** błędzie `GET /user` — także przy braku sieci,
+timeoucie czy 5xx — i użytkownik lądował na ekranie gościa, a po powrocie sieci musiał logować się od nowa
+(znalezione na emulatorze 2026-11-23). Teraz błąd sieci/serwera zostawia token, apka pokazuje ostatni znany
+profil (cache w AsyncStorage, czyszczony przy wylogowaniu jak reszta danych konta) i po powrocie sieci sama
+ponawia weryfikację (z odstępem). 401 obsługuje jak dotąd `base.ts`.
+- [ ] Zimny start w trybie samolotowym: zalogowany, Home z danymi z cache, bez ekranu gościa
+- [ ] Po włączeniu sieci: profil i preferencje odświeżają się bez ponownego logowania
+- [ ] Token unieważniony na serwerze (wylogowanie z innego urządzenia / usunięty token) → start online kończy się ekranem logowania
+- [ ] Wylogowanie → zimny start offline: ekran gościa (cache profilu usunięty)
 
 ## Na `main`, ale niezweryfikowane runtime
 
