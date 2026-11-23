@@ -3595,6 +3595,7 @@
       "newWithFormNamed": "Nuevo ejercicio «{{name}}»",
       "newWithFormHint": "Con grupo muscular, material y vídeo",
       "noResults": "No hay resultados: escribe un nombre para crearlo",
+      "offline": "Sin conexión: la biblioteca de ejercicios se cargará cuando vuelvas a estar en línea.",
       "global": "Global",
       "mine": "Míos"
     },
@@ -3736,6 +3737,7 @@
         "pending_other": "Sin conexión · {{count}} cambios pendientes",
         "completeQueued": "Entrenamiento guardado en el teléfono. Lo enviaremos y añadiremos la actividad cuando vuelva la conexión.",
         "addSet": "Para añadir una serie necesitas conexión. Puedes seguir registrando las demás series sin conexión.",
+        "addExercise": "Para añadir un ejercicio necesitas conexión. Puedes seguir registrando las series que ya tienes sin conexión.",
         "skip": "No puedes omitir el entrenamiento sin conexión: algunas series aún esperan a enviarse."
       }
     },

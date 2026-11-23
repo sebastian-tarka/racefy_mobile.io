@@ -3591,6 +3591,7 @@
       "newWithFormNamed": "Nowe ćwiczenie „{{name}}”",
       "newWithFormHint": "Z partią mięśni, sprzętem i filmem",
       "noResults": "Nic nie znaleziono — wpisz nazwę, aby utworzyć",
+      "offline": "Brak połączenia — biblioteka ćwiczeń wczyta się, gdy wrócisz do sieci.",
       "global": "Globalne",
       "mine": "Moje"
     },
@@ -3733,6 +3734,7 @@
         "pending_other": "Bez sieci · {{count}} zmian czeka",
         "completeQueued": "Trening zapisany na telefonie. Wyślemy go i dodamy aktywność, gdy wróci internet.",
         "addSet": "Dodanie serii wymaga internetu. Pozostałe serie możesz zapisywać bez sieci.",
+        "addExercise": "Dodanie ćwiczenia wymaga internetu. Serie, które już masz, możesz zapisywać bez sieci.",
         "skip": "Nie da się pominąć treningu bez internetu — część serii czeka jeszcze na wysłanie."
       }
     },

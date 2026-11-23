@@ -15,6 +15,7 @@ import { ScreenContainer } from '../../../components';
 import { useTheme } from '../../../hooks/useTheme';
 import { api } from '../../../services/api';
 import { logger } from '../../../services/logger';
+import { isNetworkFailure } from '../../../utils/errors';
 import type { Exercise, ExerciseReference } from '../../../types/workouts';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 
@@ -44,6 +45,7 @@ export function ExercisePickerModal({ visible, onClose, onSelect, onCreateWithFo
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -52,9 +54,13 @@ export function ExercisePickerModal({ visible, onClose, onSelect, onCreateWithFo
     const timer = setTimeout(async () => {
       try {
         const page = await api.listExercises({ q: query.trim() || undefined, per_page: 50 });
-        if (!cancelled) setResults(page.data);
+        if (!cancelled) {
+          setResults(page.data);
+          setOffline(false);
+        }
       } catch (err) {
         logger.warn('api', 'Exercise search failed', { error: err });
+        if (!cancelled && isNetworkFailure(err)) setOffline(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -138,7 +144,7 @@ export function ExercisePickerModal({ visible, onClose, onSelect, onCreateWithFo
           ListEmptyComponent={
             !loading ? (
               <Text style={[styles.empty, { color: colors.textMuted }]}>
-                {t('strengthPlans.picker.noResults')}
+                {offline ? t('strengthPlans.picker.offline') : t('strengthPlans.picker.noResults')}
               </Text>
             ) : null
           }

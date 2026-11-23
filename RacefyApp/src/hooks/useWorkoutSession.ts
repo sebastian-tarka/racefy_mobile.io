@@ -14,7 +14,7 @@ import type {
   WorkoutSessionSetUpdate,
   WorkoutSessionStats,
 } from '../types/workouts';
-import { getErrorMessage, getErrorStatus } from '../utils/errors';
+import { getErrorMessage, isNetworkFailure } from '../utils/errors';
 import { activeSeconds } from '../utils/sessionDuration';
 
 export interface SetValues {
@@ -49,11 +49,6 @@ function computeStats(exercises: WorkoutSession['exercises']): WorkoutSessionSta
     volume_kg: Math.round(volume * 10) / 10,
     exercises: new Set(sets.map((x) => x.exercise_order)).size,
   };
-}
-
-function isNetworkFailure(error: unknown): boolean {
-  const status = getErrorStatus(error);
-  return status == null || status >= 500 || status === 429;
 }
 
 /**
@@ -318,9 +313,17 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
         }
         return created;
       } catch (error) {
+        // An exercise_id not yet in the session means a new exercise, not another set.
+        const isNewExercise =
+          'exercise_id' in input &&
+          !sessionRef.current?.exercises?.some((ex) => ex.exercise?.id === input.exercise_id);
         onErrorRef.current(
           isNetworkFailure(error)
-            ? i18n.t('strengthPlans.session.offline.addSet')
+            ? i18n.t(
+                isNewExercise
+                  ? 'strengthPlans.session.offline.addExercise'
+                  : 'strengthPlans.session.offline.addSet',
+              )
             : getErrorMessage(error),
         );
         return null;

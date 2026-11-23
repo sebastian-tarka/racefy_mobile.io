@@ -3532,6 +3532,7 @@
       "newWithFormNamed": "New exercise “{{name}}”",
       "newWithFormHint": "With muscle group, equipment and video",
       "noResults": "Nothing found — type a name to create it",
+      "offline": "No connection — the exercise library will load when you are back online.",
       "global": "Global",
       "mine": "Mine"
     },
@@ -3672,6 +3673,7 @@
         "pending_other": "Offline · {{count}} changes waiting",
         "completeQueued": "Workout saved on your phone. We'll send it and add the activity once you're back online.",
         "addSet": "Adding a set needs an internet connection. You can keep logging the other sets offline.",
+        "addExercise": "Adding an exercise needs an internet connection. You can keep logging the sets you already have offline.",
         "skip": "You can't skip a workout offline — some sets are still waiting to be sent."
       }
     },

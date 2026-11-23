@@ -36,7 +36,7 @@ import { WorkoutSessionSummary } from './components/WorkoutSessionSummary';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
 import { ExercisePickerModal } from './components/ExercisePickerModal';
-import { getErrorMessage } from '../../utils/errors';
+import { getErrorMessage, isNetworkFailure } from '../../utils/errors';
 import { LONG_SESSION_SECONDS, MAX_SESSION_DURATION_SECONDS } from '../../utils/sessionDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
@@ -194,7 +194,13 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
       const created = await s.addSet({ exercise_id: exerciseId });
       if (created) setCurrentOrder(created.exercise_order);
     } catch (error) {
-      Alert.alert('', getErrorMessage(error) || t('common.error'));
+      // Only creating the exercise by name can throw here; addSet reports its own errors.
+      Alert.alert(
+        '',
+        isNetworkFailure(error)
+          ? t('strengthPlans.session.offline.addExercise')
+          : getErrorMessage(error) || t('common.error'),
+      );
     } finally {
       setIsAddingExercise(false);
     }
