@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-22**
+Stan na: **2026-11-23**
 
 ---
 
@@ -23,15 +23,14 @@ zakończeniu z dwóch najczęściej trenowanych partii („Trening siłowy · Kl
 (biblioteka, szybka nowa nazwa albo pełny formularz z partią mięśni → powrót do sesji), „+ seria” także dla
 ćwiczeń ad hoc, „Odrzuć trening” (DELETE) zamiast „Pomiń”, „Zakończ” bez zaliczonej serii proponuje odrzucenie.
 i18n pl/en/es. `tsc`, eslint, jest (942) zielone.
-**Wymaga API z `feature/strength-free-session` (racefy_api.io: `POST /workout-sessions` bez `workout_id`,
-`is_freeform`, sport `strength-training` aktywny) — na produkcji jeszcze nie ma, merge dopiero po wdrożeniu API.**
+**API na produkcji od v1.3.100 (2026-11-22; prod 1.3.104) — merge już nie czeka na backend.**
 - [x] Arkusz Start → „Trening siłowy” otwiera pustą sesję (emulator Android, lokalne API)
 - [x] Ćwiczenie z biblioteki: seria z ostatnim ciężarem i przerwą 90 s; „+ seria” dla ćwiczenia ad hoc (emulator)
 - [x] „Nowe ćwiczenie” → formularz z nazwą z wyszukiwarki → zapis wraca do sesji i dodaje ćwiczenie (emulator)
 - [x] Zakończenie → aktywność; „Odrzuć trening” usuwa sesję; drugi start przy otwartej sesji → „Wznowić?” (emulator)
-- [ ] Nazwa po zakończeniu z partii mięśni („Trening siłowy · Plecy”) widoczna w podsumowaniu i w feedzie
-- [ ] Lista planów: „Trening dowolny” w menu „+” i w pustym stanie
-- [ ] Offline w trakcie: odhaczanie serii kolejkuje się, dodanie ćwiczenia pokazuje komunikat o sieci
+- [x] Nazwa po zakończeniu z partii mięśni („Trening siłowy · Plecy”) widoczna w podsumowaniu i w feedzie (emulator, 2026-11-23)
+- [x] Lista planów: „Trening dowolny” w menu „+” i w pustym stanie (emulator, 2026-11-23)
+- [x] Offline w trakcie: odhaczanie serii kolejkuje się, dodanie ćwiczenia pokazuje komunikat o sieci (emulator, 2026-11-23; komunikat poprawiony w 14cf093)
 - [ ] Telefon fizyczny / iOS
 
 Dodatkowo na tej samej gałęzi (2026-11-22):
@@ -46,8 +45,8 @@ Dodatkowo na tej samej gałęzi (2026-11-22):
 - [x] Arkusz zakończenia: układ, wybór RPE z opisem, widoczność (emulator)
 - [x] Podsumowanie: mozaika, objętość, postęp, ćwiczenia, nazwa „Strength training · Back” (emulator)
 - [x] Okno wersji roboczych: mapa, statystyki, przewijanie „2 z 5”, zmiana widoczności (emulator)
-- [ ] Wersje robocze: publikacja pojedyncza i „Opublikuj wszystkie” — post i aktywność dostają wybraną widoczność
-- [ ] Wersje robocze bez GPS (trening siłowy, ręczna aktywność) — karta bez mapy wygląda dobrze
+- [x] Wersje robocze: publikacja pojedyncza i „Opublikuj wszystkie” — post i aktywność dostają wybraną widoczność (emulator + baza, 2026-11-23)
+- [x] Wersje robocze bez GPS (trening siłowy, ręczna aktywność) — karta bez mapy wygląda dobrze (emulator, trening siłowy, 2026-11-23)
 
 ## Na `main`, ale niezweryfikowane runtime
 
@@ -64,7 +63,7 @@ pigułki). Nowe klucze `visibility.*` (en/pl/es). `tsc`, eslint, jest (942) ziel
 - [ ] Profil → aktywności: ikona przy własnych aktywnościach, trzy kolory czytelne w jasnym i ciemnym motywie
 - [ ] Cudzy profil: brak ikony
 - [ ] Szczegóły własnej aktywności: znacznik z etykietą obok dyscypliny, nie łamie wiersza
-- [ ] Feed: znacznik przy własnym poście
+- [x] Feed: znacznik przy własnym poście (emulator, 2026-11-23)
 
 ### `feat/commentary-mentions` — @nick uczestnika w komentarzu AI otwiera profil (zmergowane 2026-11-10, tag `pre-commentary-mentions` = main sprzed merge)
 
